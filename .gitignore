@@ -1,0 +1,12 @@
+dist/
+node_modules/
+.astro/
+.DS_Store
+*.log
+.env
+.env.production
+
+# Obsidian: workspace state is personal, settings are shared
+src/content/.obsidian/workspace.json
+src/content/.obsidian/workspace-mobile.json
+src/content/.obsidian/cache

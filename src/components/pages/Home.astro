@@ -1,0 +1,52 @@
+---
+import Base from '../../layouts/Base.astro';
+import PostList from '../PostList.astro';
+import Tag from '../Tag.astro';
+import { getPosts, getTags } from '../../lib/posts';
+import { t, base, type Lang } from '../../i18n/ui';
+import { SITE } from '../../consts.js';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const tr_ = t(lang);
+const b = base(lang);
+
+const posts = await getPosts(lang);
+const recent = posts.slice(0, 6);
+const tags = (await getTags(lang)).slice(0, 12);
+---
+
+<Base lang={lang} title={tr_('site.tagline')} path={`${b}/`} altPath={lang === 'en' ? '/tr/' : '/'}>
+  <div class="wrap">
+    <section class="intro">
+      <h1>{SITE.author}</h1>
+      <p>{tr_('site.tagline')}</p>
+    </section>
+
+    <h2 class="section-label">{tr_('home.recent')}</h2>
+    <PostList posts={recent} lang={lang} />
+
+    {
+      posts.length > recent.length && (
+        <p class="meta" style="margin-top:1.5rem">
+          <a href={`${b}/posts/`}>{tr_('home.allPosts')} →</a>
+        </p>
+      )
+    }
+
+    {
+      tags.length > 0 && (
+        <>
+          <h2 class="section-label">{tr_('tags.title')}</h2>
+          <ul class="tag-list">
+            {tags.map(({ tag, count }) => (
+              <li>
+                <Tag tag={tag} href={`${b}/tags/${tag}/`} count={count} />
+              </li>
+            ))}
+          </ul>
+        </>
+      )
+    }
+  </div>
+</Base>

@@ -1,0 +1,14 @@
+{
+  "alwaysUpdateLinks": false,
+  "newLinkFormat": "absolute",
+  "useMarkdownLinks": true,
+  "attachmentFolderPath": "../../public/uploads",
+  "showLineNumber": false,
+  "spellcheck": false,
+  "propertiesInDocument": "source",
+  "showUnsupportedFiles": false,
+  "defaultViewMode": "source",
+  "livePreview": true,
+  "readableLineLength": true,
+  "strictLineBreaks": false
+}

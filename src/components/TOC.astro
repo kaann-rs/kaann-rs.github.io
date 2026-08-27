@@ -1,0 +1,66 @@
+---
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+  headings: MarkdownHeading[];
+  label: string;
+}
+
+const { headings, label } = Astro.props;
+// h2–h4 only; h1 is the post's own title, so it stays out.
+const items = headings.filter((h) => h.depth >= 2 && h.depth <= 4);
+---
+
+{
+  items.length > 0 && (
+    <nav class="toc" aria-label={label}>
+      <p class="toc__label">{label}</p>
+      <ul>
+        {items.map((h) => (
+          <li>
+            <a href={`#${h.slug}`} class={`depth-${h.depth}`} data-toc-link={h.slug}>
+              {h.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
+<script>
+  // Mark the heading currently in view.
+  const links = document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]');
+  if (links.length) {
+    const bySlug = new Map<string, HTMLAnchorElement[]>();
+    links.forEach((a) => {
+      const slug = a.dataset.tocLink!;
+      bySlug.set(slug, [...(bySlug.get(slug) ?? []), a]);
+    });
+
+    const targets = [...bySlug.keys()]
+      .map((slug) => document.getElementById(slug))
+      .filter((el): el is HTMLElement => el !== null);
+
+    let active: string | null = null;
+
+    const setActive = (slug: string | null) => {
+      if (slug === active) return;
+      if (active) bySlug.get(active)?.forEach((a) => a.removeAttribute('data-active'));
+      if (slug) bySlug.get(slug)?.forEach((a) => a.setAttribute('data-active', 'true'));
+      active = slug;
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible.length) setActive(visible[0].target.id);
+      },
+      { rootMargin: '-80px 0px -70% 0px', threshold: 0 }
+    );
+
+    targets.forEach((el) => observer.observe(el));
+  }
+</script>

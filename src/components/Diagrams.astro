@@ -1,0 +1,70 @@
+---
+/*
+ * Mermaid diagrams — lazily loaded.
+ *
+ * If the page has no `.mermaid-graph`, the mermaid package is never fetched;
+ * Vite splits it into its own chunk and the dynamic import fires on demand.
+ */
+---
+
+<script>
+  const nodes = document.querySelectorAll<HTMLElement>('[data-mermaid]');
+
+  if (nodes.length) {
+    const isDark = () => document.documentElement.classList.contains('dark');
+
+    // Bind site tokens to mermaid's theme variables so the diagram
+    // matches the selected theme.
+    const themeVars = () => {
+      const cs = getComputedStyle(document.documentElement);
+      const v = (name: string) => cs.getPropertyValue(name).trim();
+      return {
+        background: v('--bg'),
+        primaryColor: v('--bg-subtle'),
+        primaryTextColor: v('--text'),
+        primaryBorderColor: v('--border'),
+        lineColor: v('--text-muted'),
+        secondaryColor: v('--accent-weak'),
+        tertiaryColor: v('--bg-subtle'),
+        fontFamily: v('--font-mono') || 'monospace',
+        fontSize: '13px',
+      };
+    };
+
+    const sources = [...nodes].map((n) => n.textContent?.trim() ?? '');
+
+    const { default: mermaid } = await import('mermaid');
+
+    const render = async () => {
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'strict',
+        theme: isDark() ? 'dark' : 'base',
+        themeVariables: themeVars(),
+      });
+
+      for (let i = 0; i < nodes.length; i++) {
+        try {
+          const { svg } = await mermaid.render(`mmd-${i}-${Date.now()}`, sources[i]);
+          nodes[i].innerHTML = svg;
+          nodes[i].dataset.rendered = '';
+        } catch {
+          // A broken diagram must not take the page down — leave the source as is.
+          nodes[i].dataset.failed = '';
+        }
+      }
+    };
+
+    await render();
+
+    // Redraw when the theme or light/dark mode changes.
+    let timer: number | undefined;
+    new MutationObserver(() => {
+      clearTimeout(timer);
+      timer = window.setTimeout(render, 80);
+    }).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme'],
+    });
+  }
+</script>

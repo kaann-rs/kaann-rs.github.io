@@ -1,0 +1,80 @@
+---
+import {
+  THEMES, DEFAULT_THEME,
+  CODE_THEMES, DEFAULT_CODE_THEME,
+  CODE_FONTS, DEFAULT_CODE_FONT,
+} from '../consts.js';
+import { t, type Lang } from '../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const tr_ = t(lang);
+
+/*
+ * Each row: a localStorage key + the dataset field on <html>.
+ * A single script drives all three; adding a preference = one row.
+ */
+const rows = [
+  { id: 'theme-select', label: tr_('theme.select'), pref: 'theme-name', attr: 'theme', options: THEMES, def: DEFAULT_THEME },
+  { id: 'code-theme-select', label: tr_('codeTheme'), pref: 'code-theme', attr: 'codeTheme', options: CODE_THEMES, def: DEFAULT_CODE_THEME },
+  { id: 'code-font-select', label: tr_('codeFont'), pref: 'code-font', attr: 'codeFont', options: CODE_FONTS, def: DEFAULT_CODE_FONT },
+];
+---
+
+<details class="appearance" data-appearance>
+  <summary class="icon-btn" aria-label={tr_('appearance')} title={tr_('appearance')}>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="3.2" />
+      <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.9 19.3a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.7 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1Z" />
+    </svg>
+  </summary>
+
+  <div class="appearance__panel">
+    {
+      rows.map((row) => (
+        <label class="appearance__row" for={row.id}>
+          <span>{row.label}</span>
+          <select id={row.id} class="appearance__select" data-pref={row.pref} data-attr={row.attr}>
+            {row.options.map((o) => (
+              <option value={o.id} selected={o.id === row.def}>{o.label}</option>
+            ))}
+          </select>
+        </label>
+      ))
+    }
+  </div>
+</details>
+
+<script>
+  const panel = document.querySelector<HTMLDetailsElement>('[data-appearance]');
+
+  document.querySelectorAll<HTMLSelectElement>('[data-pref]').forEach((sel) => {
+    const key = sel.dataset.pref!;
+    const attr = sel.dataset.attr!;
+
+    // The server sends the default; sync it with the saved preference.
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) sel.value = saved;
+    } catch {}
+
+    sel.addEventListener('change', () => {
+      document.documentElement.dataset[attr] = sel.value;
+      try {
+        localStorage.setItem(key, sel.value);
+      } catch {}
+    });
+  });
+
+  // Close on outside click and on Escape
+  document.addEventListener('click', (e) => {
+    if (panel?.open && !panel.contains(e.target as Node)) panel.open = false;
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && panel?.open) {
+      panel.open = false;
+      panel.querySelector('summary')?.focus();
+    }
+  });
+</script>

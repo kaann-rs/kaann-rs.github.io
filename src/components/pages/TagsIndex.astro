@@ -1,0 +1,35 @@
+---
+import Base from '../../layouts/Base.astro';
+import Tag from '../Tag.astro';
+import { getTags } from '../../lib/posts';
+import { t, base, type Lang } from '../../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const tr_ = t(lang);
+const b = base(lang);
+const tags = await getTags(lang);
+---
+
+<Base
+  lang={lang}
+  title={tr_('tags.title')}
+  path={`${b}/tags/`}
+  altPath={lang === 'en' ? '/tr/tags/' : '/tags/'}
+>
+  <div class="wrap">
+    <section class="intro">
+      <h1>{tr_('tags.title')}</h1>
+    </section>
+
+    <ul class="tag-list" style="margin-top:2rem">
+      {
+        tags.map(({ tag, count }) => (
+          <li>
+            <Tag tag={tag} href={`${b}/tags/${tag}/`} count={count} />
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</Base>

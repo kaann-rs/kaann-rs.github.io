@@ -1,0 +1,47 @@
+---
+interface Source {
+  title: string;
+  author?: string;
+  url?: string;
+  detail?: string;
+}
+
+interface Props {
+  sources: Source[];
+  label: string;
+}
+
+const { sources, label } = Astro.props;
+
+/** Shorten a link for readability: https://www.x.com/a/b -> x.com/a/b */
+const pretty = (url: string) => url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+---
+
+{
+  sources.length > 0 && (
+    <section class="sources" aria-labelledby="sources-heading">
+      <p class="sources__label" id="sources-heading">{label}</p>
+      <ol>
+        {sources.map((s) => (
+          <li>
+            <div>
+              <span class="sources__title">
+                {s.url ? <a href={s.url} rel="noopener noreferrer">{s.title}</a> : s.title}
+              </span>
+              {s.author && <span class="sources__author"> — {s.author}</span>}
+              {s.detail && <span class="sources__detail">, {s.detail}</span>}
+              {s.url && (
+                <>
+                  <br />
+                  <a class="sources__link" href={s.url} rel="noopener noreferrer">
+                    {pretty(s.url)}
+                  </a>
+                </>
+              )}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )
+}

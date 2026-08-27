@@ -1,0 +1,29 @@
+---
+import { resolveIcon, FALLBACK } from '../lib/icons.mjs';
+
+interface Props {
+  tag: string;
+  size?: number;
+}
+
+const { tag, size = 13 } = Astro.props;
+
+// Tags use the same official logos as code block tabs.
+// Ferris is in the set — reachable via the `ferris` tag.
+// An unknown tag falls back to the `#` sign.
+const icon = resolveIcon(tag) ?? FALLBACK;
+---
+
+<svg
+  class="tag__icon"
+  width={size}
+  height={size}
+  viewBox={icon.viewBox ?? '0 0 24 24'}
+  fill={icon.filled ? 'currentColor' : 'none'}
+  stroke={icon.filled ? 'none' : 'currentColor'}
+  stroke-width={icon.filled ? undefined : 1.6}
+  stroke-linecap={icon.filled ? undefined : 'round'}
+  stroke-linejoin={icon.filled ? undefined : 'round'}
+  aria-hidden="true"
+  set:html={icon.body}
+/>

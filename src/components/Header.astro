@@ -1,0 +1,45 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+import Appearance from './Appearance.astro';
+import { SITE } from '../consts.js';
+import { t, base, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+  altPath?: string;
+}
+
+const { lang, altPath } = Astro.props;
+const tr_ = t(lang);
+const b = base(lang);
+const other: Lang = lang === 'en' ? 'tr' : 'en';
+const otherHref = altPath ?? (other === 'en' ? '/' : '/tr/');
+
+const current = Astro.url.pathname.replace(/\/$/, '');
+const isCurrent = (href: string) => current === href.replace(/\/$/, '');
+
+const links = [
+  { href: `${b}/posts/`, label: tr_('nav.posts') },
+  { href: `${b}/tags/`, label: tr_('nav.tags') },
+  { href: `${b}/about/`, label: tr_('nav.about') },
+];
+---
+
+<header class="site-header">
+  <div class="wrap site-header__inner">
+    <a class="site-header__brand" href={`${b}/`}>{SITE.author}</a>
+
+    <nav class="site-nav" aria-label={lang === 'tr' ? 'Ana gezinme' : 'Main navigation'}>
+      {
+        links.map((l) => (
+          <a href={l.href} aria-current={isCurrent(l.href) ? 'page' : undefined}>
+            {l.label}
+          </a>
+        ))
+      }
+      <a href={otherHref} hreflang={other} lang={other}>{tr_('post.translation')}</a>
+      <Appearance lang={lang} />
+      <ThemeToggle label={tr_('theme.toggle')} />
+    </nav>
+  </div>
+</header>

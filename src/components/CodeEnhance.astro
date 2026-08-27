@@ -1,0 +1,121 @@
+---
+import { t, type Lang } from '../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const tr_ = t(lang);
+---
+
+<div
+  id="code-i18n"
+  hidden
+  data-copy={tr_('code.copy')}
+  data-copied={tr_('code.copied')}
+>
+</div>
+
+<script>
+  const i18n = document.getElementById('code-i18n');
+  const COPY = i18n?.dataset.copy ?? 'Copy';
+  const COPIED = i18n?.dataset.copied ?? 'Copied';
+
+  const ICON_COPY =
+    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+  const ICON_OK =
+    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+
+  /* --- Full-path tooltip ---------------------------------------- */
+  // One element travels in the body; we don't build DOM per tab.
+  let tip: HTMLElement | null = null;
+
+  function showTip(anchor: HTMLElement, label: string) {
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.className = 'code-tip';
+      tip.setAttribute('role', 'tooltip');
+      document.body.appendChild(tip);
+    }
+    tip.textContent = label;
+    tip.dataset.show = '';
+
+    const a = anchor.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    const left = Math.max(8, Math.min(a.left + a.width / 2 - t.width / 2, innerWidth - t.width - 8));
+    // Fall below when there is no room above.
+    const top = a.top - t.height - 8 >= 8 ? a.top - t.height - 8 : a.bottom + 8;
+
+    tip.style.left = `${Math.round(left)}px`;
+    tip.style.top = `${Math.round(top)}px`;
+  }
+
+  function hideTip() {
+    if (tip) delete tip.dataset.show;
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-full]').forEach((el) => {
+    const label = el.dataset.full!;
+    // No tooltip needed when the visible text is already the full path.
+    const visible = el.textContent?.trim();
+    if (!label || label === visible) return;
+
+    el.addEventListener('pointerenter', () => showTip(el, label));
+    el.addEventListener('pointerleave', hideTip);
+    el.addEventListener('focus', () => showTip(el, label));
+    el.addEventListener('blur', hideTip);
+  });
+
+  window.addEventListener('scroll', hideTip, { passive: true });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') hideTip();
+  });
+
+  /* --- Copy ------------------------------------------------------ */
+  async function write(text: string): Promise<boolean> {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // The clipboard API is absent in insecure contexts — fall back.
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        ta.remove();
+        return ok;
+      } catch {
+        return false;
+      }
+    }
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((btn) => {
+    btn.innerHTML = ICON_COPY;
+    btn.setAttribute('aria-label', COPY);
+    btn.title = COPY;
+
+    let timer: number | undefined;
+
+    btn.addEventListener('click', async () => {
+      const pre = btn.closest('.code-block')?.querySelector<HTMLElement>('pre');
+
+      if (!pre || !(await write(pre.innerText))) return;
+
+      btn.innerHTML = ICON_OK;
+      btn.dataset.copied = '';
+      btn.setAttribute('aria-label', COPIED);
+      btn.title = COPIED;
+
+      clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        btn.innerHTML = ICON_COPY;
+        delete btn.dataset.copied;
+        btn.setAttribute('aria-label', COPY);
+        btn.title = COPY;
+      }, 1600);
+    });
+  });
+</script>

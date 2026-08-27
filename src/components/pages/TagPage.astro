@@ -1,0 +1,33 @@
+---
+import Base from '../../layouts/Base.astro';
+import PostList from '../PostList.astro';
+import { t, base, type Lang } from '../../i18n/ui';
+import type { Post } from '../../lib/posts';
+
+interface Props {
+  lang: Lang;
+  tag: string;
+  posts: Post[];
+}
+
+const { lang, tag, posts } = Astro.props;
+const tr_ = t(lang);
+const b = base(lang);
+---
+
+<Base lang={lang} title={`${tr_('tags.postsIn')}: ${tag}`} path={`${b}/tags/${tag}/`}>
+  <div class="wrap">
+    <section class="intro">
+      <p class="meta">{tr_('tags.postsIn')}</p>
+      <h1>{tag}</h1>
+    </section>
+
+    <div style="margin-top:2rem">
+      <PostList posts={posts} lang={lang} />
+    </div>
+
+    <p class="meta" style="margin-top:2.5rem">
+      <a href={`${b}/tags/`}>← {tr_('tags.title')}</a>
+    </p>
+  </div>
+</Base>

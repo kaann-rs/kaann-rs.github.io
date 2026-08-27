@@ -1,0 +1,103 @@
+---
+import 'katex/dist/katex.min.css';
+import '../styles/global.css';
+
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import CodeEnhance from '../components/CodeEnhance.astro';
+import Diagrams from '../components/Diagrams.astro';
+import { SITE } from '../consts.js';
+import { t, base, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+  title: string;
+  description?: string;
+  /** Path of the counterpart in the other language — without it the switcher goes to that language's home. */
+  altPath?: string;
+  /** This page's own path, for hreflang. */
+  path?: string;
+}
+
+const { lang, title, description, altPath, path = '/' } = Astro.props;
+const tr_ = t(lang);
+const desc = description ?? tr_('site.tagline');
+const fullTitle = path === base(lang) + '/' ? `${SITE.author} — ${title}` : `${title} · ${SITE.author}`;
+const canonical = new URL(path, Astro.site ?? 'https://example.com');
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={desc} />
+    <link rel="canonical" href={canonical} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+
+    <link rel="alternate" hreflang="en" href={new URL('/', canonical)} />
+    <link rel="alternate" hreflang="tr" href={new URL('/tr/', canonical)} />
+
+    <link rel="alternate" type="application/rss+xml" title={SITE.author} href={`${base(lang)}/rss.xml`} />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Fira+Code:wght@400;500&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap"
+    />
+
+    <!-- Apply appearance preferences before paint so nothing flashes -->
+    <script is:inline>
+      (function () {
+        var root = document.documentElement;
+        // [localStorage key, dataset field, default]
+        var prefs = [
+          ['theme-name', 'theme', 'minimal'],
+          ['code-theme', 'codeTheme', 'vitesse'],
+          ['code-font', 'codeFont', 'jetbrains'],
+        ];
+        var dark = false;
+
+        for (var i = 0; i < prefs.length; i++) {
+          var value = prefs[i][2];
+          try {
+            value = localStorage.getItem(prefs[i][0]) || value;
+          } catch (e) {
+            // Private tab or blocked storage — carry on with the default.
+          }
+          root.dataset[prefs[i][1]] = value;
+        }
+
+        try {
+          var saved = localStorage.getItem('theme');
+          dark = saved
+            ? saved === 'dark'
+            : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        } catch (e) {}
+
+        root.classList.toggle('dark', dark);
+        // Controls that should appear only with JS key off this class.
+        root.classList.add('js');
+      })();
+    </script>
+  </head>
+
+  <body>
+    <a class="skip-link" href="#content">{lang === 'tr' ? 'İçeriğe atla' : 'Skip to content'}</a>
+    <Header lang={lang} altPath={altPath} />
+    <main id="content">
+      <slot />
+    </main>
+    <Footer lang={lang} />
+    <CodeEnhance lang={lang} />
+    <Diagrams />
+  </body>
+</html>

@@ -1,0 +1,17 @@
+---
+import TagIcon from './TagIcon.astro';
+
+interface Props {
+  tag: string;
+  href: string;
+  count?: number;
+}
+
+const { tag, href, count } = Astro.props;
+---
+
+<a class="tag" href={href}>
+  <TagIcon tag={tag} />
+  <span>{tag}</span>
+  {count !== undefined && <span class="tag__count">{count}</span>}
+</a>
