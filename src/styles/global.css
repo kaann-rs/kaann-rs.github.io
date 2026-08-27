@@ -506,6 +506,7 @@ main { padding-block: 3.5rem 5rem; }
 --------------------------------------------------------------- */
 .prose { max-width: var(--measure); }
 
+.prose > * { margin-block: 0; }
 .prose > * + * { margin-top: 1.4em; }
 
 .prose h2,
@@ -538,7 +539,7 @@ main { padding-block: 3.5rem 5rem; }
 .prose :is(h2, h3, h4):hover > a.anchor,
 .prose a.anchor:focus-visible { opacity: 1; }
 
-.prose p { margin: 0; text-wrap: pretty; }
+.prose p { text-wrap: pretty; }
 
 .prose :is(ul, ol) { margin-block: 1.4em; padding-left: 1.4em; }
 .prose li + li { margin-top: 0.4em; }
@@ -1082,8 +1083,8 @@ html[data-code-theme="gruvbox"].dark .astro-code span {
 .callout__kind { font-weight: 600; color: var(--accent); }
 .callout__name { color: var(--text-muted); }
 
-.callout__body > *:first-child { margin-top: 0; }
-.callout__body > *:last-child { margin-bottom: 0; }
+.callout__body > * { margin-block: 0; }
+.callout__body > * + * { margin-top: 0.9em; }
 
 /* The ones that need no proof stay quieter */
 .callout--example,
