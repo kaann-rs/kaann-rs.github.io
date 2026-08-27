@@ -1,9 +1,10 @@
 ---
 title: "Some Thoughts I'm Not Sure Are Philosophical"
-description: 
-date: {{date:2026-08-27}}
+description: "On whether human concepts such as desire, ego and purpose can meaningfully be applied to God."
+date: 2026-08-27
 lang: en
 tags: [philosophy, religion]
+translationKey: philosophical-thoughts
 draft: false
 sources: []
 ---

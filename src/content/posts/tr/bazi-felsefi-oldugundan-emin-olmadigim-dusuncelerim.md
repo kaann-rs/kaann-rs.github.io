@@ -1,9 +1,10 @@
 ---
 title: "Bazı Felsefi Olduğundan Emin Olmadığım Düşüncelerim"
-description: 
-date: {{date:2026-08-27}}
+description: "İstek, ego ve amaç gibi insani kavramların Tanrı'ya uygulanmasının ne ölçüde anlamlı olduğu üzerine."
+date: 2026-08-27
 lang: tr
 tags: [philosophy, religion]
+translationKey: philosophical-thoughts
 draft: false
 sources: []
 ---
