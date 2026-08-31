@@ -1,81 +1,47 @@
+/**
+ * Site-wide constants.
+ *
+ * This site is a project showcase, not a blog: the work speaks, and each
+ * project keeps its own overview, changelog and roadmap.
+ */
+
 export const SITE = {
   url: 'https://kaanbora.dev',
   author: 'Kaan',
   email: 'kaandijivo@gmail.com',
-  github: 'https://github.com/kaann-rs/kaann-rs.github.io',
+  /** GitHub profile. */
+  github: 'https://github.com/kaann-rs',
+  /** This site's own repository. */
+  repo: 'https://github.com/kaann-rs/kaann-rs.github.io',
 };
 
 export const LOCALES = /** @type {const} */ (['en', 'tr']);
 export const DEFAULT_LOCALE = 'en';
 
 /**
- * Theme list. To add a new theme:
- *   1. one line here,
- *   2. two blocks in global.css (light + dark).
- * Nothing else needs to be touched.
+ * The house colour. One signature accent, light and dark — no theme picker.
+ * A project may override it per page with its own accent (see the `accent`
+ * field in the projects collection); this is the fallback everything else uses.
  */
-export const THEMES = [
-  { id: 'minimal', label: 'Minimal' },
-  { id: 'catppuccin', label: 'Catppuccin' },
-  { id: 'gruvbox', label: 'Gruvbox' },
-  { id: 'luxury', label: 'Luxury' },
-  { id: 'modern', label: 'Modern' },
-  { id: 'shadcn', label: 'shadcn' },
-  { id: 'supabase', label: 'Supabase' },
-  { id: 'vercel', label: 'Vercel' },
-];
-
-export const DEFAULT_THEME = 'minimal';
-
-/** Code color themes. New theme = one shiki pair in astro.config + one rule in global.css. */
-export const CODE_THEMES = [
-  { id: 'vitesse', label: 'Vitesse' },
-  { id: 'catppuccin', label: 'Catppuccin' },
-  { id: 'gruvbox', label: 'Gruvbox' },
-];
-
-export const DEFAULT_CODE_THEME = 'vitesse';
-
-/** Code fonts. 'jetbrains' has no rule — it falls back to the :root default. */
-export const CODE_FONTS = [
-  { id: 'jetbrains', label: 'JetBrains Mono' },
-  { id: 'ibm', label: 'IBM Plex Mono' },
-  { id: 'fira', label: 'Fira Code' },
-  { id: 'system', label: 'System' },
-];
-
-export const DEFAULT_CODE_FONT = 'jetbrains';
+export const BRAND = {
+  light: '#d9480f',
+  dark: '#ff5e1f',
+};
 
 /**
- * Comments — Giscus (GitHub Discussions).
- *
- * To enable:
- *   1. the repository must be public
- *   2. tick Settings > General > Features > Discussions
- *   3. install the github.com/apps/giscus app on the repository
- *   4. go to giscus.app, enter the repository, and it hands you repoId and categoryId
- *   5. fill in the fields below and set `enabled: true`
- *
- * Comments are posted with the reader's own GitHub account; no data is
- * stored on your server.
+ * Project lifecycle states. The id is what goes in a project's frontmatter;
+ * the label comes from i18n (`status.<id>`), the colour from global.css.
  */
-export const GISCUS = {
-  enabled: false,
+export const STATUSES = /** @type {const} */ ([
+  'active',
+  'stable',
+  'maintenance',
+  'experiment',
+  'archived',
+]);
 
-  repo: 'kullanici/depo',
-  repoId: '',
-  category: 'Announcements',
-  categoryId: '',
+/** Release kinds — decides the shape of the badge on a changelog entry. */
+export const RELEASE_KINDS = /** @type {const} */ (['major', 'minor', 'patch', 'prerelease']);
 
-  /** How a post is matched to a discussion. 'pathname' is right for most blogs. */
-  mapping: 'pathname',
-  reactionsEnabled: '1',
-  inputPosition: 'bottom',
-
-  /**
-   * Site mode -> giscus theme.
-   * giscus ships other themes too (catppuccin_latte, catppuccin_mocha,
-   * dark_dimmed, noborder_light ...) — swap them here.
-   */
-  themes: { light: 'light', dark: 'dark' },
-};
+/** Roadmap milestone states. */
+export const MILESTONE_STATES = /** @type {const} */ (['shipped', 'building', 'planned', 'exploring']);

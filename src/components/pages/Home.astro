@@ -1,52 +1,106 @@
 ---
 import Base from '../../layouts/Base.astro';
-import PostList from '../PostList.astro';
-import Tag from '../Tag.astro';
-import { getPosts, getTags } from '../../lib/posts';
-import { t, base, type Lang } from '../../i18n/ui';
-import { SITE } from '../../consts.js';
+import ProjectCard from '../ProjectCard.astro';
+import ActivityFeed from '../ActivityFeed.astro';
+import ActivityStrip from '../ActivityStrip.astro';
+import Empty from '../Empty.astro';
+import Icon from '../Icon.astro';
+import { getProjects, getActivity, latestRelease, slugOf, getReleases } from '../../lib/projects';
+import { t, base, formatDateShort, type Lang } from '../../i18n/ui';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const tr_ = t(lang);
 const b = base(lang);
 
-const posts = await getPosts(lang);
-const recent = posts.slice(0, 6);
-const tags = (await getTags(lang)).slice(0, 12);
+const projects = await getProjects(lang);
+const featured = projects.slice(0, 6);
+
+/** One lookup per card, resolved up front so the template stays flat. */
+const cards = await Promise.all(
+  featured.map(async (project) => ({
+    project,
+    latest: await latestRelease(lang, slugOf(project.id)),
+  }))
+);
+
+const activity = await getActivity(lang, 6);
+
+/* A three-cell ledger under the hero: what exists, how much has shipped, and
+   when. It is the shortest honest answer to "is this thing alive?". */
+const releases = await getReleases(lang);
+const newest = releases.find((r) => !r.data.unreleased);
+const stats = [
+  { icon: 'package', label: tr_('home.statProjects'), value: String(projects.length) },
+  { icon: 'releases', label: tr_('home.statReleases'), value: String(releases.length) },
+  {
+    icon: 'clock',
+    label: tr_('home.statLatest'),
+    value: newest ? formatDateShort(newest.data.date, lang) : tr_('home.statNone'),
+  },
+];
 ---
 
-<Base lang={lang} title={tr_('site.tagline')} path={`${b}/`} altPath={lang === 'en' ? '/tr/' : '/'}>
+<Base
+  lang={lang}
+  title={tr_('site.tagline')}
+  path={`${b}/`}
+  altPath={lang === 'en' ? '/tr/' : '/'}
+>
   <div class="wrap">
-    <section class="intro">
-      <h1>{SITE.author}</h1>
-      <p>{tr_('site.tagline')}</p>
+    <section class="hero band" data-rule="bottom">
+      <h1>{tr_('home.title')}</h1>
+      <p class="lede">{tr_('home.lede')}</p>
     </section>
 
-    <h2 class="section-label">{tr_('home.recent')}</h2>
-    <PostList posts={recent} lang={lang} />
+    <dl class="stats band" data-rule="top">
+      {
+        stats.map((stat) => (
+          <div class="stats__cell">
+            <dt class="meta">
+              <Icon name={stat.icon} size={13} />
+              {stat.label}
+            </dt>
+            <dd>{stat.value}</dd>
+          </div>
+        ))
+      }
+    </dl>
 
-    {
-      posts.length > recent.length && (
-        <p class="meta" style="margin-top:1.5rem">
-          <a href={`${b}/posts/`}>{tr_('home.allPosts')} →</a>
-        </p>
-      )
-    }
+    <section class="section band" data-rule="top" aria-labelledby="home-projects">
+      <div class="section__head">
+        <h2 class="section__label" id="home-projects">{tr_('home.projects')}</h2>
+        {
+          projects.length > featured.length && (
+            <a class="section__more meta" href={`${b}/projects/`}>
+              {tr_('home.allProjects')} →
+            </a>
+          )
+        }
+      </div>
 
-    {
-      tags.length > 0 && (
-        <>
-          <h2 class="section-label">{tr_('tags.title')}</h2>
-          <ul class="tag-list">
-            {tags.map(({ tag, count }) => (
-              <li>
-                <Tag tag={tag} href={`${b}/tags/${tag}/`} count={count} />
-              </li>
+      {
+        cards.length === 0 ? (
+          <Empty text={tr_('projects.empty')} icon="package" />
+        ) : (
+          <div class="grid band">
+            {cards.map(({ project, latest }) => (
+              <ProjectCard project={project} lang={lang} latest={latest} />
             ))}
-          </ul>
-        </>
-      )
-    }
+          </div>
+        )
+      }
+    </section>
+
+    <ActivityStrip items={await getActivity(lang)} lang={lang} />
+
+    <section class="section band" data-rule="top" aria-labelledby="home-activity">
+      <div class="section__head">
+        <h2 class="section__label" id="home-activity">{tr_('home.activity')}</h2>
+        <a class="section__more meta" href={`${b}/changelog/`}>{tr_('home.allChanges')} →</a>
+      </div>
+
+      <ActivityFeed items={activity} lang={lang} />
+    </section>
   </div>
 </Base>

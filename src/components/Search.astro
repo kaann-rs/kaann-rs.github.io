@@ -1,0 +1,158 @@
+---
+import Icon from './Icon.astro';
+import { t, type Lang } from '../i18n/ui';
+
+/**
+ * Search over the built site.
+ *
+ * The index is produced by Pagefind after `astro build`, so there is nothing
+ * to query while developing — the panel says so rather than failing silently.
+ * Pagefind picks the index matching <html lang>, so Turkish pages search
+ * Turkish content.
+ */
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const tr_ = t(lang);
+---
+
+<button class="search-open" type="button" data-search-open aria-haspopup="dialog">
+  <Icon name="search" size={14} />
+  <span class="search-open__label">{tr_('search.open')}</span>
+  <kbd class="search-open__key">⌘K</kbd>
+</button>
+
+<dialog class="search" data-search aria-label={tr_('search.title')}>
+  <form class="search__bar" method="dialog" data-search-form>
+    <Icon name="search" size={16} />
+    <input
+      class="search__input"
+      type="search"
+      autocomplete="off"
+      spellcheck="false"
+      placeholder={tr_('search.placeholder')}
+      aria-label={tr_('search.title')}
+      data-search-input
+    />
+    <button class="search__close" type="button" data-search-close aria-label={tr_('search.close')}>
+      <Icon name="close" size={15} />
+    </button>
+  </form>
+
+  <div class="search__body">
+    <p
+      class="search__hint meta"
+      data-search-hint
+      data-idle={tr_('search.hint')}
+      data-none={tr_('search.none')}
+      data-dev={tr_('search.dev')}
+    >
+      {tr_('search.hint')}
+    </p>
+    <ol class="search__results" data-search-results></ol>
+  </div>
+</dialog>
+
+<script>
+  const dialog = document.querySelector<HTMLDialogElement>('[data-search]');
+  const input = document.querySelector<HTMLInputElement>('[data-search-input]');
+  const list = document.querySelector<HTMLOListElement>('[data-search-results]');
+  const hint = document.querySelector<HTMLElement>('[data-search-hint]');
+
+  if (dialog && input && list && hint) {
+    let engine: any = null;
+    let loadFailed = false;
+
+    /** The index only exists in a built site; dev has nothing to load. */
+    const engineReady = async () => {
+      if (engine || loadFailed) return engine;
+      try {
+        engine = await import(/* @vite-ignore */ `${import.meta.env.BASE_URL}pagefind/pagefind.js`);
+        await engine.options({ excerptLength: 24 });
+        return engine;
+      } catch {
+        loadFailed = true;
+        return null;
+      }
+    };
+
+    const open = () => {
+      if (dialog.open) return;
+      dialog.showModal();
+      input.focus();
+      void engineReady();
+    };
+
+    const close = () => dialog.close();
+
+    document.querySelector('[data-search-open]')?.addEventListener('click', open);
+    document.querySelector('[data-search-close]')?.addEventListener('click', close);
+    document.querySelector('[data-search-form]')?.addEventListener('submit', (e) => e.preventDefault());
+
+    // Click outside the panel body closes it.
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) close();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        dialog.open ? close() : open();
+      }
+    });
+
+    let token = 0;
+    const render = async (query: string) => {
+      const mine = ++token;
+      list.innerHTML = '';
+
+      if (!query.trim()) {
+        hint.hidden = false;
+        hint.textContent = hint.dataset.idle!;
+        return;
+      }
+
+      const pf = await engineReady();
+      if (mine !== token) return;
+
+      if (!pf) {
+        hint.hidden = false;
+        hint.textContent = hint.dataset.dev!;
+        return;
+      }
+
+      const search = await pf.search(query);
+      if (mine !== token) return;
+
+      const results = await Promise.all(search.results.slice(0, 8).map((r: any) => r.data()));
+      if (mine !== token) return;
+
+      hint.hidden = results.length > 0;
+      if (!results.length) hint.textContent = hint.dataset.none!;
+
+      for (const result of results) {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = result.url;
+        a.className = 'search__hit';
+
+        const title = document.createElement('span');
+        title.className = 'search__hit-title';
+        title.textContent = result.meta?.title ?? result.url;
+
+        const excerpt = document.createElement('span');
+        excerpt.className = 'search__hit-excerpt meta';
+        excerpt.innerHTML = result.excerpt;
+
+        a.append(title, excerpt);
+        li.append(a);
+        list.append(li);
+      }
+    };
+
+    let timer: number | undefined;
+    input.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = window.setTimeout(() => void render(input.value), 120);
+    });
+  }
+</script>

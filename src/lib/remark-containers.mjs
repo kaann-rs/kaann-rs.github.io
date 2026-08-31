@@ -21,7 +21,10 @@ import { visit } from 'unist-util-visit';
  *   :::
  *
  * Numbering runs per file and per kind (Theorem 1, Theorem 2, Lemma 1).
- * The label language comes from the post's `lang` frontmatter field.
+ * The label word is written as data attributes and chosen by CSS from
+ * <html lang>, not baked into the markup. Rendering therefore does not depend
+ * on frontmatter reaching the plugin — which it does not when a body comes
+ * from the CMS rather than from a file.
  */
 
 const NODE = 'container';
@@ -90,10 +93,19 @@ export default function remarkContainers() {
 
 function buildCallout(node, kind, label, next, lang) {
   const [en, tr, numbered] = KINDS[kind];
-  const word = lang === 'tr' ? tr : en;
-  const head = numbered ? `${word} ${next(kind)}` : word;
 
-  const heading = [h('span', { className: ['callout__kind'] }, [text(head)])];
+  const heading = [
+    h(
+      'span',
+      {
+        className: ['callout__kind'],
+        'data-en': en,
+        'data-tr': tr,
+        ...(numbered ? { 'data-n': String(next(kind)) } : {}),
+      },
+      []
+    ),
+  ];
 
   if (label) {
     heading.push(
@@ -116,13 +128,16 @@ function buildCallout(node, kind, label, next, lang) {
 }
 
 function buildFigure(node, label, n, lang) {
-  const word = lang === 'tr' ? FIGURE[1] : FIGURE[0];
   const children = [...node.children];
 
   if (label) {
     children.push(
       h('figcaption', {}, [
-        h('span', { className: ['figure__label'] }, [text(`${word} ${n}`)]),
+        h(
+          'span',
+          { className: ['figure__label'], 'data-en': FIGURE[0], 'data-tr': FIGURE[1], 'data-n': String(n) },
+          []
+        ),
         text(' — '),
         ...label.children,
       ])

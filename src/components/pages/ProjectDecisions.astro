@@ -1,0 +1,56 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProjectHeader from '../ProjectHeader.astro';
+import DecisionLog from '../DecisionLog.astro';
+import Empty from '../Empty.astro';
+import Icon from '../Icon.astro';
+import { projectNav, slugOf, hasTranslation, type Project } from '../../lib/projects';
+import { t, base, type Lang } from '../../i18n/ui';
+
+interface Props { project: Project }
+
+const { project } = Astro.props;
+const lang = project.data.lang;
+const tr_ = t(lang);
+const slug = slugOf(project.id);
+const other: Lang = lang === 'en' ? 'tr' : 'en';
+
+const { decisions, sections } = await projectNav(lang, slug);
+
+const altPath = (await hasTranslation(lang, slug))
+  ? `${base(other)}/projects/${slug}/decisions/`
+  : undefined;
+---
+
+<Base
+  lang={lang}
+  title={`${project.data.name} — ${tr_('section.decisions')}`}
+  description={tr_('dec.lede')}
+  path={`${base(lang)}/projects/${slug}/decisions/`}
+  altPath={altPath}
+  accent={project.data.accent}
+  accentDark={project.data.accentDark}
+  ogImage={`/og/${lang === 'en' ? '' : 'tr/'}${slug}.png`}
+>
+  <div class="wrap">
+    <article>
+      <ProjectHeader project={project} lang={lang} current="decisions" sections={sections} />
+
+      <div class="doc-head band" data-rule="bottom">
+        <h2 class="doc-head__title">
+          <Icon name="target" size={18} />
+          {tr_('section.decisions')}
+        </h2>
+        <p class="doc-head__desc">{tr_('dec.lede')}</p>
+      </div>
+
+      {
+        decisions.length > 0 ? (
+          <DecisionLog decisions={decisions} lang={lang} />
+        ) : (
+          <Empty text={tr_('dec.empty')} icon="target" />
+        )
+      }
+    </article>
+  </div>
+</Base>

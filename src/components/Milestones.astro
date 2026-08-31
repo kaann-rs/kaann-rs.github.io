@@ -1,0 +1,76 @@
+---
+import Icon from './Icon.astro';
+import { t, type Lang } from '../i18n/ui';
+import type { Roadmap } from '../lib/projects';
+
+interface Props {
+  roadmap: Roadmap;
+  lang: Lang;
+}
+
+const { roadmap, lang } = Astro.props;
+const tr_ = t(lang);
+const { milestones } = roadmap.data;
+
+/** One mark per milestone state — the shape says the state before the label does. */
+const STATE_ICONS = {
+  shipped: 'check',
+  building: 'hammer',
+  planned: 'circle',
+  exploring: 'compass',
+} as const;
+
+const progressOf = (items: { done: boolean }[]) => {
+  const done = items.filter((i) => i.done).length;
+  return { done, total: items.length, pct: items.length ? Math.round((done / items.length) * 100) : 0 };
+};
+---
+
+<ol class="milestones">
+  {
+    milestones.map((m) => {
+      const p = progressOf(m.items);
+      return (
+        <li class="milestone" data-state={m.status}>
+          <div class="milestone__head">
+            <h2 class="milestone__title">{m.title}</h2>
+            <span class="state meta" data-state={m.status}>
+              <Icon name={STATE_ICONS[m.status]} size={12} />
+              {tr_(`milestone.${m.status}`)}
+            </span>
+            {m.target && (
+            <span class="milestone__target meta">
+              <Icon name="target" size={12} />
+              {m.target}
+            </span>
+          )}
+          </div>
+
+          {m.note && <p class="milestone__note">{m.note}</p>}
+
+          {m.items.length > 0 && (
+            <>
+              <ul class="checklist">
+                {m.items.map((item) => (
+                  <li data-done={item.done ? '' : undefined}>
+                    <span class="checklist__box" aria-hidden="true">
+                      {item.done && <Icon name="check" size={10} />}
+                    </span>
+                    <span>{item.text}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div class="progress" role="img" aria-label={`${p.done}/${p.total} ${tr_('roadmap.progress')}`}>
+                <div class="progress__bar" style={`--pct:${p.pct}%`} />
+                <span class="progress__label meta">
+                  {p.done}/{p.total} {tr_('roadmap.progress')}
+                </span>
+              </div>
+            </>
+          )}
+        </li>
+      );
+    })
+  }
+</ol>

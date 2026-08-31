@@ -68,31 +68,27 @@ Scrolls inside its own box on narrow screens. Math works in cells.
 `##` and `###` become the TOC automatically — a sticky column on wide screens,
 a collapsible box on narrow ones. `#` is the title, never used in the body.
 
-Turn it off for one post with `toc: false`.
+The contents column appears once a page has two or more `##` headings.
 
-## Links between posts
+## Links between pages
 
 ````markdown
-[the IR post](/posts/why-an-ir/)          EN
-[IR yazısı](/tr/posts/neden-ir/)          TR
+[voparser](/projects/voparser/)                       overview
+[changelog](/projects/voparser/changelog/)          a section
+[0.2.0](/projects/voparser/changelog/#v0.2.0)       one release
+[mimari](/tr/projects/voparser/architecture/)       Turkish
 ````
 
 Use site paths, not Obsidian `[[wiki links]]` — those do not survive the build.
 
 ## Translations
 
-Put the same `translationKey` in both files:
+Nothing to declare: the EN and TR files of a project share a filename, and that
+is what links them. `projects/en/voparser.md` and `projects/tr/voparser.md` are the
+same project, so the language switch in the header jumps between them instead of
+falling back to the other language's home page.
 
-```yaml
-# posts/en/why-an-ir.md
-translationKey: why-an-ir
-
-# posts/tr/neden-ir.md
-translationKey: why-an-ir
-```
-
-The language switch in the header then jumps to the counterpart instead of the
-other language's home page.
+A project that exists in one language only simply does not appear in the other.
 
 ## Publishing
 

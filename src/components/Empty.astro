@@ -1,0 +1,16 @@
+---
+import Icon from './Icon.astro';
+
+/** The state a section shows when there is genuinely nothing to show yet. */
+interface Props {
+  text: string;
+  icon?: string;
+}
+
+const { text, icon = 'inbox' } = Astro.props;
+---
+
+<p class="empty meta">
+  <Icon name={icon} size={20} />
+  <span>{text}</span>
+</p>

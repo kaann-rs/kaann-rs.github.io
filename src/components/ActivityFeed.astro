@@ -1,0 +1,56 @@
+---
+import Monogram from './Monogram.astro';
+import Empty from './Empty.astro';
+import { base, formatDateShort, t, type Lang } from '../i18n/ui';
+import { slugOf, type Activity } from '../lib/projects';
+
+interface Props {
+  items: Activity[];
+  lang: Lang;
+  /** Hide the project column on a page that is already about one project. */
+  showProject?: boolean;
+}
+
+const { items, lang, showProject = true } = Astro.props;
+const tr_ = t(lang);
+const b = base(lang);
+---
+
+{
+  items.length === 0 ? (
+<Empty text={tr_('changelog.empty')} />
+  ) : (
+    <ul class="activity band">
+      {items.map(({ release, project }) => {
+        const slug = slugOf(project.id);
+        const d = release.data;
+        return (
+          <li class="activity__row">
+            <a href={`${b}/projects/${slug}/changelog/#v${d.version}`} class="activity__link">
+              {showProject && (
+                <span class="activity__project">
+                  <Monogram
+                    monogram={project.data.monogram}
+                    accent={project.data.accent}
+                    accentDark={project.data.accentDark}
+                    glyph={project.data.glyph}
+                    icon={project.data.icon}
+                    size="sm"
+                  />
+                  <span class="activity__name">{project.data.name}</span>
+                </span>
+              )}
+              <span class="activity__version meta">
+                {d.unreleased ? tr_('changelog.unreleased') : d.version}
+              </span>
+              <span class="activity__summary">{d.summary}</span>
+              <time class="activity__date meta" datetime={d.date.toISOString()}>
+                {formatDateShort(d.date, lang)}
+              </time>
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  )
+}

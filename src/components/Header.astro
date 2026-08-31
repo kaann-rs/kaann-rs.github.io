@@ -1,11 +1,12 @@
 ---
-import ThemeToggle from './ThemeToggle.astro';
-import Appearance from './Appearance.astro';
+import Mark from './Mark.astro';
+import Search from './Search.astro';
 import { SITE } from '../consts.js';
 import { t, base, type Lang } from '../i18n/ui';
 
 interface Props {
   lang: Lang;
+  /** Where the language switch should land. Defaults to the other language's home. */
   altPath?: string;
 }
 
@@ -16,30 +17,38 @@ const other: Lang = lang === 'en' ? 'tr' : 'en';
 const otherHref = altPath ?? (other === 'en' ? '/' : '/tr/');
 
 const current = Astro.url.pathname.replace(/\/$/, '');
-const isCurrent = (href: string) => current === href.replace(/\/$/, '');
+/** A section stays lit while you are anywhere inside it. */
+const inSection = (href: string) => {
+  const h = href.replace(/\/$/, '');
+  return current === h || current.startsWith(h + '/');
+};
 
 const links = [
-  { href: `${b}/posts/`, label: tr_('nav.posts') },
-  { href: `${b}/tags/`, label: tr_('nav.tags') },
+  { href: `${b}/projects/`, label: tr_('nav.projects') },
+  { href: `${b}/changelog/`, label: tr_('nav.changelog') },
   { href: `${b}/about/`, label: tr_('nav.about') },
 ];
 ---
 
 <header class="site-header">
   <div class="wrap site-header__inner">
-    <a class="site-header__brand" href={`${b}/`}>{SITE.author}</a>
+    <a class="brand" href={`${b}/`}>
+      <Mark size={18} class="brand__mark" />
+      <span class="brand__name">{SITE.author}</span>
+    </a>
 
-    <nav class="site-nav" aria-label={lang === 'tr' ? 'Ana gezinme' : 'Main navigation'}>
+    <nav class="site-nav" aria-label={tr_('a11y.nav')}>
       {
         links.map((l) => (
-          <a href={l.href} aria-current={isCurrent(l.href) ? 'page' : undefined}>
+          <a href={l.href} aria-current={inSection(l.href) ? 'page' : undefined}>
             {l.label}
           </a>
         ))
       }
-      <a href={otherHref} hreflang={other} lang={other}>{tr_('post.translation')}</a>
-      <Appearance lang={lang} />
-      <ThemeToggle label={tr_('theme.toggle')} />
+      <Search lang={lang} />
+      <a class="site-nav__lang" href={otherHref} hreflang={other} lang={other}>
+        {tr_('nav.language')}
+      </a>
     </nav>
   </div>
 </header>

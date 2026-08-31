@@ -60,15 +60,11 @@ export default defineConfig({
     ],
 
     shikiConfig: {
-      // Three theme pairs are embedded; CSS decides which one shows.
+      // One pair, light and dark; CSS picks by prefers-color-scheme.
       // defaultColor:false -> shiki inlines no color, everything is a variable.
       themes: {
         light: 'vitesse-light',
         dark: 'vitesse-dark',
-        'cat-light': 'catppuccin-latte',
-        'cat-dark': 'catppuccin-mocha',
-        'gruv-light': 'gruvbox-light-medium',
-        'gruv-dark': 'gruvbox-dark-medium',
       },
       defaultColor: false,
       transformers: [

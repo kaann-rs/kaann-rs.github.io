@@ -1,0 +1,29 @@
+---
+import Icon from './Icon.astro';
+
+/**
+ * The small mono labels used for a project's stack. An entry whose name the
+ * icon set recognises gets its mark; the rest stand on their own.
+ */
+interface Props {
+  items: string[];
+  class?: string;
+  limit?: number;
+}
+
+const { items, class: klass, limit } = Astro.props;
+const shown = limit ? items.slice(0, limit) : items;
+const rest = items.length - shown.length;
+---
+
+<ul class:list={['chips', 'meta', klass]}>
+  {
+    shown.map((item) => (
+      <li>
+        <Icon name={item} size={12} />
+        <span>{item}</span>
+      </li>
+    ))
+  }
+  {rest > 0 && <li class="chips__more">+{rest}</li>}
+</ul>

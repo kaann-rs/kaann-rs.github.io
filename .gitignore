@@ -10,3 +10,11 @@ node_modules/
 src/content/.obsidian/workspace.json
 src/content/.obsidian/workspace-mobile.json
 src/content/.obsidian/cache
+
+# Next only hosts the Payload admin locally; its build output is disposable
+cms/.next/
+
+# The content database itself IS tracked — it is the source of truth for the
+# CMS, and the build needs it. Its journal files are not.
+cms/content.db-shm
+cms/content.db-wal

@@ -1,0 +1,11 @@
+---
+import ProjectChangelog from '../../../../../components/pages/ProjectChangelog.astro';
+import { sectionPaths } from '../../../../../lib/projects';
+
+export async function getStaticPaths() {
+  return sectionPaths('tr', 'changelog');
+}
+
+const { project } = Astro.props;
+---
+<ProjectChangelog project={project} />

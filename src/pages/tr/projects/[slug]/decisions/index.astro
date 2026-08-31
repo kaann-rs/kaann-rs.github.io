@@ -1,0 +1,11 @@
+---
+import ProjectDecisions from '../../../../../components/pages/ProjectDecisions.astro';
+import { sectionPaths } from '../../../../../lib/projects';
+
+export async function getStaticPaths() {
+  return sectionPaths('tr', 'decisions');
+}
+
+const { project } = Astro.props;
+---
+<ProjectDecisions project={project} />

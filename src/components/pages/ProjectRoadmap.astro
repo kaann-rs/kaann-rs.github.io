@@ -1,0 +1,70 @@
+---
+import { render } from 'astro:content';
+
+import Base from '../../layouts/Base.astro';
+import ProjectHeader from '../ProjectHeader.astro';
+import Milestones from '../Milestones.astro';
+import Empty from '../Empty.astro';
+import Icon from '../Icon.astro';
+import { projectNav, slugOf, hasTranslation, type Project } from '../../lib/projects';
+import { t, base, formatDate, type Lang } from '../../i18n/ui';
+
+interface Props { project: Project }
+
+const { project } = Astro.props;
+const lang = project.data.lang;
+const tr_ = t(lang);
+const slug = slugOf(project.id);
+const other: Lang = lang === 'en' ? 'tr' : 'en';
+
+const { roadmap, sections } = await projectNav(lang, slug);
+
+/* The roadmap body is optional context above the milestones — why this order,
+   what is deliberately out of scope. */
+const Body = roadmap ? (await render(roadmap)).Content : undefined;
+const hasBody = Boolean(roadmap?.body?.trim());
+
+const altPath = (await hasTranslation(lang, slug))
+  ? `${base(other)}/projects/${slug}/roadmap/`
+  : undefined;
+---
+
+<Base
+  lang={lang}
+  title={`${project.data.name} — ${tr_('section.roadmap')}`}
+  description={`${tr_('section.roadmap')}: ${project.data.tagline}`}
+  path={`${base(lang)}/projects/${slug}/roadmap/`}
+  altPath={altPath}
+  accent={project.data.accent}
+  accentDark={project.data.accentDark}
+  ogImage={`/og/${lang === 'en' ? '' : 'tr/'}${slug}.png`}
+>
+  <div class="wrap">
+    <article>
+      <ProjectHeader project={project} lang={lang} current="roadmap" sections={sections} />
+
+      {
+        roadmap?.data.updated && (
+          <p class="page-head__count meta">
+            <Icon name="clock" size={13} />
+            {tr_('roadmap.updated')} {formatDate(roadmap.data.updated, lang)}
+          </p>
+        )
+      }
+
+      {hasBody && Body && (
+        <div class="prose prose--tight roadmap-note">
+          <Body />
+        </div>
+      )}
+
+      {
+        roadmap && roadmap.data.milestones.length > 0 ? (
+          <Milestones roadmap={roadmap} lang={lang} />
+        ) : (
+          <Empty text={tr_('roadmap.empty')} icon="roadmap" />
+        )
+      }
+    </article>
+  </div>
+</Base>

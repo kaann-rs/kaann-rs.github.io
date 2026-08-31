@@ -1,20 +1,38 @@
 ---
+import Icon from './Icon.astro';
+import Mark from './Mark.astro';
 import { SITE } from '../consts.js';
 import { t, base, type Lang } from '../i18n/ui';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const tr_ = t(lang);
+const b = base(lang);
 const year = new Date().getFullYear();
+
+const links = [
+  { href: `${b}/changelog/rss.xml`, label: 'RSS', icon: 'rss' },
+  { href: SITE.github, label: tr_('footer.github'), icon: 'repo' },
+  { href: SITE.repo, label: tr_('footer.source'), icon: 'code' },
+  { href: `mailto:${SITE.email}`, label: tr_('footer.email'), icon: 'mail' },
+];
 ---
 
 <footer class="site-footer">
   <div class="wrap site-footer__inner meta">
-    <span>© {year} {SITE.author}</span>
-    <span>
-      <a href={`${base(lang)}/rss.xml`}>RSS</a>
-      {' · '}
-      <a href={SITE.github}>{tr_('footer.source')}</a>
+    <span class="site-footer__sig">
+      <Mark size={15} class="site-footer__mark" />
+      © {year} {SITE.author}
     </span>
+    <nav class="site-footer__links" aria-label="Footer">
+      {
+        links.map((l) => (
+          <a href={l.href}>
+            <Icon name={l.icon} size={13} />
+            {l.label}
+          </a>
+        ))
+      }
+    </nav>
   </div>
 </footer>

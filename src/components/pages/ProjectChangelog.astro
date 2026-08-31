@@ -1,0 +1,40 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProjectHeader from '../ProjectHeader.astro';
+import ReleaseList from '../ReleaseList.astro';
+import { projectNav, slugOf, hasTranslation, type Project } from '../../lib/projects';
+import { t, base, type Lang } from '../../i18n/ui';
+
+interface Props { project: Project }
+
+const { project } = Astro.props;
+const lang = project.data.lang;
+const tr_ = t(lang);
+const slug = slugOf(project.id);
+const other: Lang = lang === 'en' ? 'tr' : 'en';
+
+const { releases, sections } = await projectNav(lang, slug);
+
+const altPath = (await hasTranslation(lang, slug))
+  ? `${base(other)}/projects/${slug}/changelog/`
+  : undefined;
+---
+
+<Base
+  lang={lang}
+  title={`${project.data.name} — ${tr_('section.changelog')}`}
+  description={`${tr_('section.changelog')}: ${project.data.tagline}`}
+  path={`${base(lang)}/projects/${slug}/changelog/`}
+  altPath={altPath}
+  accent={project.data.accent}
+  accentDark={project.data.accentDark}
+  ogImage={`/og/${lang === 'en' ? '' : 'tr/'}${slug}.png`}
+>
+  <div class="wrap">
+    <article>
+      <ProjectHeader project={project} lang={lang} current="changelog" sections={sections} />
+
+      <ReleaseList releases={releases} lang={lang} />
+    </article>
+  </div>
+</Base>

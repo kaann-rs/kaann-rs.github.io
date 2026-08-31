@@ -11,25 +11,51 @@
   const nodes = document.querySelectorAll<HTMLElement>('[data-mermaid]');
 
   if (nodes.length) {
-    const isDark = () => document.documentElement.classList.contains('dark');
+    const scheme = window.matchMedia('(prefers-color-scheme: dark)');
+    const isDark = () => scheme.matches;
 
-    // Bind site tokens to mermaid's theme variables so the diagram
-    // matches the selected theme.
-    const themeVars = () => {
-      const cs = getComputedStyle(document.documentElement);
-      const v = (name: string) => cs.getPropertyValue(name).trim();
-      return {
-        background: v('--bg'),
-        primaryColor: v('--bg-subtle'),
-        primaryTextColor: v('--text'),
-        primaryBorderColor: v('--border'),
-        lineColor: v('--text-muted'),
-        secondaryColor: v('--accent-weak'),
-        tertiaryColor: v('--bg-subtle'),
-        fontFamily: v('--font-mono') || 'monospace',
-        fontSize: '13px',
-      };
+    /*
+     * Bind site tokens to mermaid's theme variables.
+     *
+     * Some tokens live on <body> and some are color-mix() expressions, which
+     * mermaid cannot parse. Resolving each one through a throwaway element
+     * hands it a plain rgb() value whatever the token was written as.
+     */
+    const probe = document.createElement('span');
+    probe.style.display = 'none';
+    document.body.appendChild(probe);
+
+    // color-mix() computes to `color(srgb …)`, a format mermaid rejects, so
+    // anything in that shape is converted back to plain rgb().
+    const SRGB = /^color\(srgb\s+([\d.eE+-]+)\s+([\d.eE+-]+)\s+([\d.eE+-]+)(?:\s*\/\s*([\d.eE+-]+))?\s*\)$/;
+
+    const toRgb = (value: string) => {
+      const m = SRGB.exec(value);
+      if (!m) return value;
+      const ch = (x: string) => Math.max(0, Math.min(255, Math.round(parseFloat(x) * 255)));
+      const alpha = m[4] === undefined ? 1 : parseFloat(m[4]);
+      const rgb = `${ch(m[1])}, ${ch(m[2])}, ${ch(m[3])}`;
+      return alpha >= 1 ? `rgb(${rgb})` : `rgba(${rgb}, ${alpha})`;
     };
+
+    const color = (name: string) => {
+      probe.style.color = '';
+      probe.style.color = `var(${name})`;
+      return toRgb(getComputedStyle(probe).color);
+    };
+
+    const themeVars = () => ({
+      background: color('--bg'),
+      primaryColor: color('--bg-subtle'),
+      primaryTextColor: color('--text'),
+      primaryBorderColor: color('--border'),
+      lineColor: color('--text-muted'),
+      secondaryColor: color('--accent-weak'),
+      tertiaryColor: color('--bg-inset'),
+      fontFamily:
+        getComputedStyle(document.body).getPropertyValue('--font-mono').trim() || 'monospace',
+      fontSize: '13px',
+    });
 
     const sources = [...nodes].map((n) => n.textContent?.trim() ?? '');
 
@@ -57,14 +83,7 @@
 
     await render();
 
-    // Redraw when the theme or light/dark mode changes.
-    let timer: number | undefined;
-    new MutationObserver(() => {
-      clearTimeout(timer);
-      timer = window.setTimeout(render, 80);
-    }).observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class', 'data-theme'],
-    });
+    // Redraw when the reader's system switches between light and dark.
+    scheme.addEventListener('change', () => void render());
   }
 </script>

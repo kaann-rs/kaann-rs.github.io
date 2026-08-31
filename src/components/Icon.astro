@@ -1,0 +1,22 @@
+---
+import { iconSvg } from '../lib/icons.mjs';
+
+/**
+ * One icon from the shared set. Inherits `currentColor`, so it takes the
+ * colour of whatever it sits in — including a project's own accent.
+ *
+ * `strict` (the default) renders nothing for an unknown name: a chip with no
+ * matching mark should show its label alone, never a meaningless glyph.
+ */
+interface Props {
+  name: string;
+  size?: number;
+  class?: string;
+  strict?: boolean;
+}
+
+const { name, size = 14, class: klass = 'icon', strict = true } = Astro.props;
+const svg = iconSvg(name, { size, className: klass, strict });
+---
+
+{svg && <Fragment set:html={svg} />}

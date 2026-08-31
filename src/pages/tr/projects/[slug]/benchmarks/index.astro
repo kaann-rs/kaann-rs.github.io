@@ -1,0 +1,11 @@
+---
+import ProjectBenchmarks from '../../../../../components/pages/ProjectBenchmarks.astro';
+import { sectionPaths } from '../../../../../lib/projects';
+
+export async function getStaticPaths() {
+  return sectionPaths('tr', 'benchmarks');
+}
+
+const { project } = Astro.props;
+---
+<ProjectBenchmarks project={project} />

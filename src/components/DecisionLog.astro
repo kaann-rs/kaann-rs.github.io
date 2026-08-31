@@ -1,0 +1,90 @@
+---
+import { render } from 'astro:content';
+
+import Icon from './Icon.astro';
+import { formatDate, t, type Lang } from '../i18n/ui';
+import type { Decision } from '../lib/projects';
+
+/**
+ * The decision log. Records are never rewritten — one that no longer holds is
+ * marked and linked to its replacement, so the reasoning stays readable in
+ * both directions.
+ */
+interface Props {
+  decisions: Decision[];
+  lang: Lang;
+}
+
+const { decisions, lang } = Astro.props;
+const tr_ = t(lang);
+
+const entries = await Promise.all(
+  decisions.map(async (d) => ({ decision: d, Content: (await render(d)).Content }))
+);
+
+const STATUS_ICONS = {
+  proposed: 'compass',
+  accepted: 'check',
+  superseded: 'changelog',
+  reverted: 'circle',
+} as const;
+
+const pad = (n: number) => String(n).padStart(3, '0');
+---
+
+<ol class="decisions">
+  {
+    entries.map(({ decision, Content }) => {
+      const d = decision.data;
+      return (
+        <li class="decision band" data-rule="top" id={`d${pad(d.number)}`} data-status={d.status}>
+          <div class="decision__head">
+            <p class="decision__number meta">
+              <a href={`#d${pad(d.number)}`}>#{pad(d.number)}</a>
+            </p>
+            <span class="state meta" data-state={d.status}>
+              <Icon name={STATUS_ICONS[d.status]} size={12} />
+              {tr_(`dec.status.${d.status}`)}
+            </span>
+            <time class="decision__date meta" datetime={d.date.toISOString()}>
+              {formatDate(d.date, lang)}
+            </time>
+          </div>
+
+          <div class="decision__body">
+            <h3 class="decision__title">{d.title}</h3>
+
+            {(d.supersedes.length > 0 || d.supersededBy) && (
+              <p class="decision__links meta">
+                {d.supersededBy && (
+                  <a href={`#d${pad(d.supersededBy)}`}>
+                    <Icon name="arrow" size={12} />
+                    {tr_('dec.supersededBy')} #{pad(d.supersededBy)}
+                  </a>
+                )}
+                {d.supersedes.map((n) => (
+                  <a href={`#d${pad(n)}`}>
+                    <Icon name="changelog" size={12} />
+                    {tr_('dec.supersedes')} #{pad(n)}
+                  </a>
+                ))}
+              </p>
+            )}
+
+            {d.tags.length > 0 && (
+              <ul class="chips meta decision__tags">
+                {d.tags.map((tag) => (
+                  <li>{tag}</li>
+                ))}
+              </ul>
+            )}
+
+            <div class="prose prose--tight">
+              <Content />
+            </div>
+          </div>
+        </li>
+      );
+    })
+  }
+</ol>

@@ -25,16 +25,16 @@ const { Content } = await render(entry);
 >
   <div class="wrap">
     <article>
-      <header class="post-header">
+      <header class="page-head band" data-rule="bottom">
         <h1>{entry.data.title}</h1>
-        <p class="post-header__desc">{entry.data.description}</p>
+        {entry.data.description && <p class="lede">{entry.data.description}</p>}
       </header>
 
       <div class="prose">
         <Content />
       </div>
 
-      <Sources sources={entry.data.sources} label={tr_('post.sources')} />
+      <Sources sources={entry.data.sources} label={tr_('project.sources')} />
     </article>
   </div>
 </Base>

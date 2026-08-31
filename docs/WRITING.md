@@ -1,6 +1,6 @@
 # Writing & configuration guide
 
-Astro + Markdown. No database, no CMS required — content lives as files under
+Astro + Markdown. No database, no CMS — content lives as files under
 `src/content/`, version control is git. `npm run build` produces static HTML.
 
 ## Running
@@ -19,65 +19,186 @@ npm run rebuild  # clear caches and build
 > `astro.config.mjs`, content is not reprocessed — use `npm run rebuild`.
 > The dev server shares the same cache; restart it after plugin changes.
 
-## New posts
+## What the site is
+
+A project showcase. Each project has an overview and any of these sections:
+
+| Section | Backed by | Shape |
+| --- | --- | --- |
+| `readme` `architecture` `structure` `state` `learned` | `docs/` | free markdown |
+| `changelog` `releases` | `releases/` | one file per version |
+| `roadmap` | `roadmaps/` | milestones with checklists |
+| `benchmarks` | `benchmarks/` | measured comparisons, drawn as bars |
+| `decisions` | `decisions/` | numbered records, never rewritten |
+
+Any other id works too, as long as `docs/<lang>/<slug>/<id>.md` exists.
+
+The home page and `/changelog/` merge every project's releases into one feed,
+which is also the site's only RSS.
+
+## Adding a project
 
 Don't write frontmatter by hand:
 
 ```bash
-npm run new -- en "The fifth postulate" --tags geometry,mathematics
-npm run new -- tr "Öklid'in beşinci postülatı"
-npm run new -- en "Title" --key my-translation-key   # translation key
-npm run new -- en "Draft post" --draft
+npm run new:project -- voparser --mono vp --accent "#7e22ce"
+npm run new:project -- "My Tool" --status experiment --draft
 ```
 
-Creates the file in the right folder with valid frontmatter and prints its
-path — editor-agnostic. Handles Turkish characters properly
-(`Öklid'in beşinci postülatı` → `oklid-in-besinci-postulati`).
+This writes four files — the project and an empty roadmap, in **both**
+languages — so English and Turkish never drift apart. Flags:
 
-To open it directly in your editor:
+| Flag | Default | Notes |
+| --- | --- | --- |
+| `--name` | the argument | Display name; the slug comes from the argument |
+| `--accent` / `--accent-dark` | the house orange | Six-digit hex, quoted |
+| `--mono` | first two letters | 1–3 characters for the project mark |
+| `--status` | `active` | `active` · `stable` · `maintenance` · `experiment` · `archived` |
+| `--draft` | off | Visible in `npm run dev`, absent from the build |
+
+Turkish input is handled properly: `"Öklid Aracı"` → `oklid-araci`.
+
+## Adding a release
 
 ```bash
-nvim "$(npm run --silent new -- en 'Title')"
+npm run new:release -- voparser 0.1.0
+npm run new:release -- voparser 1.0.0 --kind major --date 2026-09-01
+npm run new:release -- voparser next  --unreleased
 ```
 
-### Frontmatter fields
+One file per language under `releases/<lang>/<slug>/`. `--unreleased` marks work
+in flight: it is pinned to the top of the changelog and labelled *Unreleased*
+instead of showing a version.
 
-```markdown
----
-title: Post title
-description: One-sentence summary shown in lists and meta tags.
-date: 2026-08-20
-lang: en
-tags: [compilers, rust]
-translationKey: unique-key      # links EN/TR versions (optional)
-draft: false                    # true → visible only in dev
-toc: true                       # table of contents
-comments: true                  # per-post comment toggle
-sources:
-  - title: Crafting Interpreters
-    author: Robert Nystrom
-    url: https://craftinginterpreters.com/
-    detail: Part II
----
+The body is free markdown. `### Added` / `### Changed` / `### Fixed` is what the
+styling expects, but nothing enforces it.
+
+## Adding a section
+
+```bash
+npm run new:doc -- voparser architecture
+npm run new:doc -- voparser profiling --title "Profiling" --title-tr "Profil"
 ```
 
-The schema is defined with Zod in `src/content.config.ts`. A missing or
-mistyped field **fails the build** — content errors surface before deploy.
+`readme`, `architecture`, `structure`, `state` and `learned` are labelled from
+the translations and already have an icon. A custom id needs `--title`,
+otherwise the tab shows the raw id; give it a mark with `glyph:` in the file's
+frontmatter (any name from `src/lib/icons.mjs`).
 
-| Field | Required | Notes |
-| --- | --- | --- |
-| `title`, `description`, `date`, `lang` | yes | `lang`: `en` \| `tr` |
-| `tags` | no | Lowercase, hyphenated; used verbatim in URLs |
-| `translationKey` | no | Must be **identical** in both language files |
-| `draft` | no | `true` → only `npm run dev` |
-| `toc` | no | Default `true`; hidden with fewer than 2 headings |
-| `sources` | no | See below |
-| `updated` | no | Last-updated date |
+## Benchmarks
+
+One file per project: `benchmarks/<lang>/<slug>.md`. The environment block is
+required — a number without the machine, the flags and the input it came from
+is a claim, not a measurement.
+
+```yaml
+environment:
+  machine: AMD Ryzen 7 5800X, 32 GB, NVMe
+  os: Debian 12, kernel 6.1
+  toolchain: gcc 12.2, -O2, single thread
+  input: 500 pages, 4.1 MB median
+  method: 30 runs, first 5 discarded, median reported
+suites:
+  - title: Parse to document
+    unit: ms
+    lowerIsBetter: true          # false for throughput
+    results:
+      - label: voParser
+        value: 41.2
+        mine: true               # marks your own implementation
+      - label: lexbor
+        value: 33.8
+        note: faster, and it stayed faster
+```
+
+Bars are drawn against the largest value in the suite, and the winner is
+marked rather than implied. A suite needs at least two results — a benchmark
+against nothing is a number, not a comparison. Put what the numbers mean in the
+body underneath; that is the part worth reading.
+
+## Decisions
+
+One file per decision: `decisions/<lang>/<slug>/<nnn>-<name>.md`.
+
+```yaml
+number: 3
+title: Persistent connections per runner
+date: 2026-08-11
+status: accepted               # proposed | accepted | superseded | reverted
+supersedes: [2]                # numbers this replaces
+supersededBy: 7                # the one that replaced this
+tags: [transport, performance]
+```
+
+Records are never rewritten. When a decision stops holding, mark the old one
+`superseded`, point it at the new number, and write the new record — the site
+links them in both directions and fades the one that no longer applies.
+`## Context / ## Options / ## Decision / ## Consequences` is the shape the
+styling expects.
+
+## Which sections appear
+
+By default, every section that has content — a docs file that exists, a
+changelog with at least one release, a roadmap with at least one milestone. An
+empty section is never linked.
+
+To pin the order, or to switch one off, list them in the project's frontmatter:
+
+```yaml
+sections: [readme, changelog, roadmap]
+```
+
+Named ids that have no content are still dropped, so the list is safe to write
+ahead of the files.
+
+## Colours and artwork
+
+A project declares two colours:
+
+```yaml
+accent: "#d9480f"       # light mode — must clear 4.5:1 on a pale background
+accentDark: "#ff5e1f"   # dark mode — the lighter of the two
+```
+
+`Base.astro` writes them onto `<body>`, and every page of that project is
+repainted: the monogram, links, the tab underline, checkboxes, progress bars.
+One house layout, a different identity inside it per project.
+
+A project's mark has three levels, in order of precedence:
+
+```yaml
+icon: ../../_assets/voparser-icon.png   # an image file
+glyph: code                             # a name from src/lib/icons.mjs
+monogram: vp                            # one to three characters
+```
+
+`glyph` is usually enough: the icon set carries marks for sections, tools and
+concepts, and the same names resolve in `stack:` too, so `stack: [Go, Docker,
+PostgreSQL]` picks up three icons without any extra work.
+
+Cover art is generated from the same parts as the site — frame rules, corner
+squares, the project's mark in its own colour, and its own light and dark
+palette:
+
+```bash
+npm run new:cover -- vocloud --glyph server --accent "#0e7490" --accent-dark "#22d3ee"
+```
+
+Then point at it, in both language files:
+
+```yaml
+cover: ../../_assets/vocloud-cover.svg   # wide, above every page of the project
+card:  ../../_assets/vocloud-card.svg    # the index card; falls back to cover
+```
+
+Photographs work the same way — put them in `src/content/_assets/` and Astro
+resizes and re-encodes them at build time, so hand it the largest version you
+have.
 
 ## Sources
 
-Rendered as a numbered list at the bottom of the post. Only `title` is
-required:
+Rendered as a numbered list at the bottom of an overview or a documentation
+section. Only `title` is required:
 
 ```yaml
 sources:
@@ -87,19 +208,15 @@ sources:
     detail: 3rd ed., ch. 5                 # optional — pages, year, chapter
 ```
 
-The `about.md` pages accept `sources` too.
+## Languages
 
-## Linking translations
+`src/pages/tr/` mirrors the English routes exactly, and `src/i18n/ui.ts` holds
+every string in both languages. A project appears in a language only when it has
+a file there — there is no silent fallback to English, which is why the
+generators always write both.
 
-Put the same `translationKey` in both files:
-
-```
-src/content/posts/en/why-an-ir.md   → translationKey: why-an-ir
-src/content/posts/tr/neden-ir.md    → translationKey: why-an-ir
-```
-
-The language link in the header then goes to the post's counterpart instead
-of the other language's home page.
+The language switch in the header lands on the counterpart page when one exists,
+and on that language's home page when it does not.
 
 ## Math
 
@@ -248,110 +365,78 @@ fence language. Unrecognized languages get no icon.
 On every block. On untitled blocks it appears in the corner on hover.
 Hidden when JavaScript is unavailable.
 
-## Appearance menu
+## The CMS
 
-The gear button in the header holds three preferences, all stored in
-`localStorage` and applied before first paint (no flash):
+Content has two interchangeable sources, and they produce byte-identical
+pages — same ids, same fields, same rendered markdown:
 
-| Preference | Options |
-| --- | --- |
-| **Theme** | Minimal, Catppuccin, Gruvbox, Luxury, Modern, shadcn, Supabase, Vercel |
-| **Code theme** | Vitesse, Catppuccin, Gruvbox |
-| **Code font** | JetBrains Mono, IBM Plex Mono, Fira Code, System |
+| Source | Where content lives | Build with |
+| --- | --- | --- |
+| `files` *(default)* | markdown under `src/content/` | `npm run build` |
+| `cms` | Payload, in `cms/content.db` | `npm run build:cms` |
 
-Light/dark is a separate toggle. Every theme defines both light and dark
-palettes, and all 16 combinations pass WCAG AA contrast.
-
-**Adding a theme:** one line in `src/consts.js`, two blocks in `global.css`
-(`html[data-theme="x"]:not(.dark)` and `html[data-theme="x"].dark`). Nothing else.
-
-**Adding a code theme:** one Shiki pair in `astro.config.mjs`, one rule in
-`global.css`, one line in `consts.js`.
-
-## Tag icons
-
-Tags get icons by name — `src/components/TagIcon.astro`, shared set in
-`src/lib/icons.mjs`. Language icons are official **simple-icons** (CC0) logos:
-Rust, Python, PHP, C, C++, Go, JavaScript, TypeScript. Topic icons
-(compilers, mathematics, geometry, psychology, books, languages…) are
-hand-drawn line icons. Unknown tags fall back to a `#` mark.
-
-`ALIASES` folds spelling variants into one key (`c++` → `cpp`, `matematik` →
-`mathematics`).
-
-Tags and code-block tabs use the same official logos. Ferris (Rust's crab
-mascot, CC0) is in the set but not the default — reachable via the `ferris`
-tag or `resolveIcon(name, { mascot: true })`.
-
-Code fences also derive an icon from their language; unrecognized languages
-get none (no meaningless `#` in a tab).
-
-## Writing from the browser (optional)
-
-**Sveltia CMS** is set up under `public/admin/` — a Git-based editor that
-runs in the browser. Frontmatter becomes form fields; the sources array is
-point-and-click.
-
-The architecture matters: the admin page is a **static file** under
-`public/`. Astro copies it as-is — it never enters the build and adds zero
-bytes to the site bundle. Visitors never download it.
-
-**Locally (no GitHub needed):**
+Payload is a **local editor, not a deployed service**. It runs only while you
+are editing; the published site is still static HTML with no database behind
+it. That is the whole reason for the SQLite file — it is committed with the
+repository, so a build anywhere reproduces the same site.
 
 ```bash
-npm run cms     # terminal A — local bridge
-npm run dev     # terminal B
+npm run cms        # http://localhost:3001/admin
+npm run dev:cms    # the site, read from the database
+npm run build:cms  # static output from the database
 ```
 
-Then open `http://localhost:4321/admin/`. Changes are written straight to
-disk; you make the commits.
+The first run asks you to create an admin user; it is stored in the same file
+and never leaves the machine.
 
-**In production:** point `repo` in `public/admin/config.yml` at the GitHub
-repository. Sveltia signs in via GitHub OAuth (needs a small OAuth proxy —
-not set up yet; local mode is fully functional).
+### Moving content between them
 
-**Math preview works.** Sveltia knows no KaTeX by itself; this repo's
-`public/admin/preview-math.js` uses Sveltia's two official hooks —
-`window.marked` (the very parser the preview uses) is extended with a KaTeX
-plugin, and `CMS.registerPreviewStyle` injects the KaTeX CSS into the preview
-iframe. Macros come from the **same file** as the site, so `$\R$` renders in
-the preview exactly as published. `preview-style.css` additionally themes the
-preview to match the site's typography.
+```bash
+npm run cms:import   # markdown  ->  database
+```
 
-> **Note:** the content field defaults to **raw** mode. Rich-text editors
-> parse and rewrite markdown; this repo's `:::theorem`, `:::tree` and code
-> fence meta (`title=`, `group=`, `[!code ++]`) are not standard markdown and
-> can be mangled. These custom blocks render as plain text in the preview —
-> their true preview is the site itself via `npm run dev`.
+Idempotent: records that exist are updated, not duplicated, so it can be re-run
+after editing files. It never writes to `src/content/` — markdown stays exactly
+as it is, which is what makes the switch reversible.
 
-### Why not Keystatic / TinaCMS
+There is no export in the other direction yet. Whichever source you build from
+is the one to edit; keeping both authoritative would need a merge strategy
+nobody wants to debug.
 
-| | Issue |
-| --- | --- |
-| **Keystatic** | `@keystatic/astro@6` doesn't work with this Astro version (`astro:env/server` fails to resolve) — tried, reverted |
-| **TinaCMS** | Requires React + its own backend (database or Tina Cloud); its rich-text editor is risky for our custom blocks |
-| **GitCMS** | Hosted and paid; no setup needed, you connect the repo on their site |
+### What Payload does not hold
 
-## Comments
+Body text stays **markdown**, in a code field rather than a rich-text editor.
+The site's pipeline runs remark and rehype over it — KaTeX, Shiki with its
+fence metadata, mermaid, `:::tree` and `:::note`. A WYSIWYG editor would
+rewrite all of that into markup the build no longer understands.
 
-**Giscus** (GitHub Discussions) is wired up but disabled. To enable, in
-`src/consts.js`:
+Artwork is a path, not an upload: `/assets/name.svg`, served from `public/`.
 
-1. Make the repo public and enable Discussions (Settings → Features)
-2. Install the app: github.com/apps/giscus
-3. Get `repoId` and `categoryId` from giscus.app
-4. Set `GISCUS.enabled = true`
+### Changing a collection
 
-The iframe follows theme changes automatically. Disable per post with
-`comments: false`.
+Edit the matching file under `cms/collections/`, then keep the two schemas in
+step — `src/content.config.ts` is what actually validates content, in both
+modes. A field that exists in only one of them is a field the other build will
+reject or ignore.
 
-## Languages
+```bash
+npm run cms:types      # regenerate cms/payload-types.ts
+npm run cms:importmap  # after adding a custom admin component
+```
 
-- English at the root: `/`, `/posts/`, `/tags/`
-- Turkish under `/tr/`: `/tr/`, `/tr/posts/`, `/tr/tags/`
+## Search
 
-UI strings live in `src/i18n/ui.ts`. When adding a string, add it to both
-languages — TypeScript errors on missing keys.
+The index is built by Pagefind after `astro build`, which is why `npm run
+build` runs both. There is nothing to query while developing — the panel says
+so rather than failing silently. Pagefind indexes `<main>` only and keeps one
+index per language, so Turkish pages search Turkish content.
+
+## Social cards
+
+Every project gets a 1200×630 PNG at build time, drawn by satori from the
+project's own colour and mark: `/og/<slug>.png`, `/og/tr/<slug>.png`, plus
+`/og/site.png` for everything else. Fonts are read from `src/assets/fonts/`
+rather than fetched, so a build with no network produces the same image.
 
 ## Deployment
 
@@ -366,18 +451,18 @@ sitemap, RSS and canonical links.
 
 ```
 src/
-├── consts.js              site settings, themes, Giscus config
-├── content.config.ts      Zod schemas (the frontmatter contract)
-├── content/
-│   ├── posts/{en,tr}/     posts
-│   └── pages/{en,tr}/     standalone pages
-├── i18n/ui.ts             UI strings + helpers
-├── lib/                   icons, post queries, remark/rehype plugins
-├── layouts/               Base, Post
-├── components/            TOC, Sources, PostList, Header, Appearance…
-│   └── pages/             page bodies (shared by EN and TR routes)
-├── pages/                 routes — EN at root, TR under /tr/
-└── styles/global.css      all styles, 8 themes
-scripts/new-post.mjs       post scaffolding (npm run new)
-public/admin/              Sveltia CMS + KaTeX macros (shared with build)
+  components/          one job each; pages/ holds whole-page compositions
+  content/             the markdown that becomes the site (an Obsidian vault)
+  content.config.ts    the schema for all five collections
+  i18n/ui.ts           every string, both languages
+  layouts/Base.astro   head, brand colour, header, footer
+  lib/projects.ts      the only place that decides what a project shows
+  pages/               routes; tr/ mirrors the English tree
+  styles/global.css    tokens first, then components
+public/                copied verbatim: CNAME, favicon.svg
+scripts/               the generators behind npm run new:*
 ```
+
+`src/lib/projects.ts` is worth reading before changing anything: `projectNav()`
+decides both the tab bar and the static paths, so a route cannot exist without a
+tab pointing at it — or the reverse.

@@ -1,0 +1,68 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProjectHeader from '../ProjectHeader.astro';
+import BenchmarkSuites from '../BenchmarkSuites.astro';
+import Sources from '../Sources.astro';
+import Empty from '../Empty.astro';
+import Icon from '../Icon.astro';
+import { projectNav, slugOf, hasTranslation, type Project } from '../../lib/projects';
+import { t, base, formatDate, type Lang } from '../../i18n/ui';
+
+interface Props { project: Project }
+
+const { project } = Astro.props;
+const lang = project.data.lang;
+const tr_ = t(lang);
+const slug = slugOf(project.id);
+const other: Lang = lang === 'en' ? 'tr' : 'en';
+
+const { benchmark, sections } = await projectNav(lang, slug);
+
+const altPath = (await hasTranslation(lang, slug))
+  ? `${base(other)}/projects/${slug}/benchmarks/`
+  : undefined;
+---
+
+<Base
+  lang={lang}
+  title={`${project.data.name} — ${tr_('section.benchmarks')}`}
+  description={tr_('bench.lede')}
+  path={`${base(lang)}/projects/${slug}/benchmarks/`}
+  altPath={altPath}
+  accent={project.data.accent}
+  accentDark={project.data.accentDark}
+  ogImage={`/og/${lang === 'en' ? '' : 'tr/'}${slug}.png`}
+>
+  <div class="wrap">
+    <article>
+      <ProjectHeader project={project} lang={lang} current="benchmarks" sections={sections} />
+
+      <div class="doc-head band" data-rule="bottom">
+        <h2 class="doc-head__title">
+          <Icon name="zap" size={18} />
+          {tr_('section.benchmarks')}
+        </h2>
+        <p class="doc-head__desc">{tr_('bench.lede')}</p>
+        {
+          benchmark?.data.updated && (
+            <p class="page-head__count meta">
+              <Icon name="clock" size={13} />
+              {tr_('roadmap.updated')} {formatDate(benchmark.data.updated, lang)}
+            </p>
+          )
+        }
+      </div>
+
+      {
+        benchmark && benchmark.data.suites.length > 0 ? (
+          <>
+            <BenchmarkSuites benchmark={benchmark} lang={lang} />
+            <Sources sources={benchmark.data.sources} label={tr_('project.sources')} />
+          </>
+        ) : (
+          <Empty text={tr_('bench.empty')} icon="zap" />
+        )
+      }
+    </article>
+  </div>
+</Base>

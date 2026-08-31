@@ -6,7 +6,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import CodeEnhance from '../components/CodeEnhance.astro';
 import Diagrams from '../components/Diagrams.astro';
-import { SITE } from '../consts.js';
+import { SITE, BRAND } from '../consts.js';
 import { t, base, type Lang } from '../i18n/ui';
 
 interface Props {
@@ -15,15 +15,44 @@ interface Props {
   description?: string;
   /** Path of the counterpart in the other language — without it the switcher goes to that language's home. */
   altPath?: string;
-  /** This page's own path, for hreflang. */
+  /** This page's own path, for canonical and hreflang. */
   path?: string;
+  /**
+   * A project's colours. Passing them repaints the whole page in that
+   * project's accent — this is what gives each project its own identity
+   * without a second design.
+   */
+  accent?: string;
+  accentDark?: string;
+  /** Social card to advertise; defaults to the site's own. */
+  ogImage?: string;
 }
 
-const { lang, title, description, altPath, path = '/' } = Astro.props;
+const {
+  lang,
+  title,
+  description,
+  altPath,
+  path = '/',
+  accent,
+  accentDark,
+  ogImage = '/og/site.png',
+} = Astro.props;
+
 const tr_ = t(lang);
 const desc = description ?? tr_('site.tagline');
-const fullTitle = path === base(lang) + '/' ? `${SITE.author} — ${title}` : `${title} · ${SITE.author}`;
+const isHome = path.replace(/\/$/, '') === base(lang);
+const fullTitle = isHome ? `${SITE.author} — ${title}` : `${title} · ${SITE.author}`;
 const canonical = new URL(path, Astro.site ?? 'https://example.com');
+const ogUrl = new URL(ogImage, canonical);
+
+/**
+ * The accent lives on <body> so a project page can hand in its own colour;
+ * global.css derives everything else (links, marks, soft fills) from it.
+ */
+const brandStyle =
+  `--brand-light:${accent ?? BRAND.light};` +
+  `--brand-dark:${accentDark ?? accent ?? BRAND.dark};`;
 ---
 
 <!doctype html>
@@ -35,65 +64,46 @@ const canonical = new URL(path, Astro.site ?? 'https://example.com');
     <meta name="description" content={desc} />
     <link rel="canonical" href={canonical} />
 
+    <meta name="theme-color" content="#fffbf5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#151414" media="(prefers-color-scheme: dark)" />
+
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE.author} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={desc} />
     <meta property="og:url" content={canonical} />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:locale" content={lang === 'tr' ? 'tr_TR' : 'en_GB'} />
+    <meta property="og:image" content={ogUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={ogUrl} />
 
     <link rel="alternate" hreflang="en" href={new URL('/', canonical)} />
     <link rel="alternate" hreflang="tr" href={new URL('/tr/', canonical)} />
 
-    <link rel="alternate" type="application/rss+xml" title={SITE.author} href={`${base(lang)}/rss.xml`} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={`${SITE.author} — ${tr_('changelog.title')}`}
+      href={`${base(lang)}/changelog/rss.xml`}
+    />
     <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Fira+Code:wght@400;500&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"
     />
-
-    <!-- Apply appearance preferences before paint so nothing flashes -->
-    <script is:inline>
-      (function () {
-        var root = document.documentElement;
-        // [localStorage key, dataset field, default]
-        var prefs = [
-          ['theme-name', 'theme', 'minimal'],
-          ['code-theme', 'codeTheme', 'vitesse'],
-          ['code-font', 'codeFont', 'jetbrains'],
-        ];
-        var dark = false;
-
-        for (var i = 0; i < prefs.length; i++) {
-          var value = prefs[i][2];
-          try {
-            value = localStorage.getItem(prefs[i][0]) || value;
-          } catch (e) {
-            // Private tab or blocked storage — carry on with the default.
-          }
-          root.dataset[prefs[i][1]] = value;
-        }
-
-        try {
-          var saved = localStorage.getItem('theme');
-          dark = saved
-            ? saved === 'dark'
-            : window.matchMedia('(prefers-color-scheme: dark)').matches;
-        } catch (e) {}
-
-        root.classList.toggle('dark', dark);
-        // Controls that should appear only with JS key off this class.
-        root.classList.add('js');
-      })();
-    </script>
   </head>
 
-  <body>
-    <a class="skip-link" href="#content">{lang === 'tr' ? 'İçeriğe atla' : 'Skip to content'}</a>
+  <body style={brandStyle} data-brand={accent ? 'project' : 'house'}>
+    <a class="skip-link" href="#content">{tr_('a11y.skip')}</a>
     <Header lang={lang} altPath={altPath} />
-    <main id="content">
+    <main id="content" data-pagefind-body data-pagefind-meta={`title:${title}`}>
       <slot />
     </main>
     <Footer lang={lang} />

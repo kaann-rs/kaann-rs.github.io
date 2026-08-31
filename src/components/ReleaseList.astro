@@ -1,0 +1,62 @@
+---
+import { render } from 'astro:content';
+
+import Icon from './Icon.astro';
+import Empty from './Empty.astro';
+import { formatDate, t, type Lang } from '../i18n/ui';
+import type { Release } from '../lib/projects';
+
+interface Props {
+  releases: Release[];
+  lang: Lang;
+}
+
+const { releases, lang } = Astro.props;
+const tr_ = t(lang);
+
+/* Each entry carries its own markdown body — Added / Changed / Fixed, or
+   whatever the release actually needs. */
+const entries = await Promise.all(
+  releases.map(async (release) => ({ release, Content: (await render(release)).Content }))
+);
+---
+
+{
+  entries.length === 0 ? (
+<Empty text={tr_('changelog.empty')} />
+  ) : (
+    <ol class="releases">
+      {entries.map(({ release, Content }) => {
+        const d = release.data;
+        return (
+          <li class="release band" id={`v${d.version}`} data-kind={d.kind} data-unreleased={d.unreleased ? '' : undefined}>
+            <div class="release__rail" aria-hidden="true" />
+
+            <div class="release__head">
+              <h2 class="release__version">
+                <a href={`#v${d.version}`}>{d.unreleased ? tr_('changelog.unreleased') : d.version}</a>
+              </h2>
+              <div class="release__meta meta">
+                <span class="kind">
+                  <Icon name={d.unreleased ? 'hammer' : 'releases'} size={11} />
+                  {d.unreleased ? tr_('kind.prerelease') : tr_(`kind.${d.kind}`)}
+                </span>
+                <time datetime={d.date.toISOString()}>
+                  <Icon name="calendar" size={11} />
+                  {formatDate(d.date, lang)}
+                </time>
+              </div>
+            </div>
+
+            <div class="release__body">
+              <p class="release__summary">{d.summary}</p>
+              <div class="prose prose--tight">
+                <Content />
+              </div>
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  )
+}
