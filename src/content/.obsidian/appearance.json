@@ -1,9 +1,9 @@
 {
   "accentColor": "#0d6ece",
   "theme": "obsidian",
-  "textFontFamily": "Inter,Ubuntu",
-  "monospaceFontFamily": "JetBrains Mono",
+  "textFontFamily": "Noto Sans",
+  "monospaceFontFamily": "Maple Mono NF",
   "cssTheme": "GitHub Theme",
-  "baseFontSize": 19,
+  "baseFontSize": 15,
   "baseFontSizeAction": true
 }
