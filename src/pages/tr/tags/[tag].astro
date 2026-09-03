@@ -1,0 +1,19 @@
+---
+import type { GetStaticPaths } from 'astro';
+import TagPage from '../../../components/pages/TagPage.astro';
+import { getTags, getPostsByTag } from '../../../lib/posts';
+
+export const getStaticPaths = (async () => {
+  const tags = await getTags('tr');
+  return Promise.all(
+    tags.map(async ({ tag }) => ({
+      params: { tag },
+      props: { tag, posts: await getPostsByTag('tr', tag) },
+    }))
+  );
+}) satisfies GetStaticPaths;
+
+const { tag, posts } = Astro.props;
+---
+
+<TagPage lang="tr" tag={tag} posts={posts} />

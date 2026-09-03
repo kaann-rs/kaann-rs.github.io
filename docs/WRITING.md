@@ -19,186 +19,92 @@ npm run rebuild  # clear caches and build
 > `astro.config.mjs`, content is not reprocessed — use `npm run rebuild`.
 > The dev server shares the same cache; restart it after plugin changes.
 
+
 ## What the site is
 
-A project showcase. Each project has an overview and any of these sections:
+A blog, in English and Turkish. One collection does the work:
 
-| Section | Backed by | Shape |
-| --- | --- | --- |
-| `readme` `architecture` `structure` `state` `learned` | `docs/` | free markdown |
-| `changelog` `releases` | `releases/` | one file per version |
-| `roadmap` | `roadmaps/` | milestones with checklists |
-| `benchmarks` | `benchmarks/` | measured comparisons, drawn as bars |
-| `decisions` | `decisions/` | numbered records, never rewritten |
+| Path | What it is |
+| --- | --- |
+| `posts/<lang>/<slug>.md` | a post; the filename is its URL |
+| `pages/<lang>/about.md` | the About page |
 
-Any other id works too, as long as `docs/<lang>/<slug>/<id>.md` exists.
+Tags are the only taxonomy. Every tag gets its own page at `/tags/<tag>/`,
+listing the posts that carry it, and the home page shows the twelve most used.
 
-The home page and `/changelog/` merge every project's releases into one feed,
-which is also the site's only RSS.
+The home page leads with whatever is marked `featured` — or, when nothing is,
+with the newest two posts as cards. Everything after that falls into the list
+below it, so no post is shown twice.
 
-## Adding a project
+## Adding a post
 
-Don't write frontmatter by hand:
-
-```bash
-npm run new:project -- voparser --mono vp --accent "#7e22ce"
-npm run new:project -- "My Tool" --status experiment --draft
-```
-
-This writes four files — the project and an empty roadmap, in **both**
-languages — so English and Turkish never drift apart. Flags:
-
-| Flag | Default | Notes |
-| --- | --- | --- |
-| `--name` | the argument | Display name; the slug comes from the argument |
-| `--accent` / `--accent-dark` | the house orange | Six-digit hex, quoted |
-| `--mono` | first two letters | 1–3 characters for the project mark |
-| `--status` | `active` | `active` · `stable` · `maintenance` · `experiment` · `archived` |
-| `--draft` | off | Visible in `npm run dev`, absent from the build |
-
-Turkish input is handled properly: `"Öklid Aracı"` → `oklid-araci`.
-
-## Adding a release
+From the repository root, which fills in the frontmatter and today's date:
 
 ```bash
-npm run new:release -- voparser 0.1.0
-npm run new:release -- voparser 1.0.0 --kind major --date 2026-09-01
-npm run new:release -- voparser next  --unreleased
+npm run new -- en "Intermediate representations" --tags compilers,rust
+npm run new -- tr "Ara temsiller" --key ir-notes --tags compilers,rust
 ```
 
-One file per language under `releases/<lang>/<slug>/`. `--unreleased` marks work
-in flight: it is pinned to the top of the changelog and labelled *Unreleased*
-instead of showing a version.
+| Option | Effect |
+| --- | --- |
+| `--tags a,b,c` | tags |
+| `--key <key>` | translation key — the same in both languages |
+| `--slug <slug>` | set the filename by hand |
+| `--draft` | create as a draft |
 
-The body is free markdown. `### Added` / `### Changed` / `### Fixed` is what the
-styling expects, but nothing enforces it.
+Or in Obsidian, from `_templates/`: **Post (EN)** and **Yazi (TR)**.
 
-## Adding a section
+Only `title`, `description`, `date` and `lang` are required. The full field
+list, with defaults, is in `src/content/_templates/Ref — frontmatter.md`.
 
-```bash
-npm run new:doc -- voparser architecture
-npm run new:doc -- voparser profiling --title "Profiling" --title-tr "Profil"
+## Tags
+
+Lowercase, hyphenated, and reused rather than invented: every distinct tag
+becomes a page, so three spellings of one subject make three near-empty pages.
+
+Most tags carry a pixel mark from the brand kit. The mapping lives in
+`src/lib/pixel-icons.mjs` as an alias table — one entry per mark, listing every
+tag name that should resolve to it, in both languages:
+
+```js
+'yengec-rust': ['rust', 'ferris', 'cargo'],
+veritabani: ['database', 'db', 'sql', 'postgres', 'sqlite', 'mysql', 'redis'],
 ```
 
-`readme`, `architecture`, `structure`, `state` and `learned` are labelled from
-the translations and already have an icon. A custom id needs `--title`,
-otherwise the tab shows the raw id; give it a mark with `glyph:` in the file's
-frontmatter (any name from `src/lib/icons.mjs`).
+A tag with no entry gets the document mark (`icerik`) rather than nothing, so
+every subject on the site has a face. To add a mark, drop the SVG into
+`src/assets/brand/icons/` — it is picked up by filename, no registration — and
+add its aliases to the table.
 
-## Benchmarks
+## Drafts
 
-One file per project: `benchmarks/<lang>/<slug>.md`. The environment block is
-required — a number without the machine, the flags and the input it came from
-is a claim, not a measurement.
+`draft: true` keeps a post out of the build, out of the feeds and out of the
+search index. It still renders in `npm run dev`, so a draft can be read in
+place before it is published.
+
+## Featured posts
+
+`featured: true` moves a post into the cards at the top of the home page. With
+nothing marked, the newest two take that slot instead — so the home page never
+looks empty, and marking one post does not require marking them all.
+
+## Covers and images
+
+Both optional. A post with neither still looks finished.
 
 ```yaml
-environment:
-  machine: AMD Ryzen 7 5800X, 32 GB, NVMe
-  os: Debian 12, kernel 6.1
-  toolchain: gcc 12.2, -O2, single thread
-  input: 500 pages, 4.1 MB median
-  method: 30 runs, first 5 discarded, median reported
-suites:
-  - title: Parse to document
-    unit: ms
-    lowerIsBetter: true          # false for throughput
-    results:
-      - label: voParser
-        value: 41.2
-        mine: true               # marks your own implementation
-      - label: lexbor
-        value: 33.8
-        note: faster, and it stayed faster
+cover: /assets/ir.png          # wide, above the body and on the card
+ogImage: /assets/ir-card.png   # the social card; one is drawn if omitted
 ```
 
-Bars are drawn against the largest value in the suite, and the winner is
-marked rather than implied. A suite needs at least two results — a benchmark
-against nothing is a number, not a comparison. Put what the numbers mean in the
-body underneath; that is the part worth reading.
-
-## Decisions
-
-One file per decision: `decisions/<lang>/<slug>/<nnn>-<name>.md`.
-
-```yaml
-number: 3
-title: Persistent connections per runner
-date: 2026-08-11
-status: accepted               # proposed | accepted | superseded | reverted
-supersedes: [2]                # numbers this replaces
-supersededBy: 7                # the one that replaced this
-tags: [transport, performance]
-```
-
-Records are never rewritten. When a decision stops holding, mark the old one
-`superseded`, point it at the new number, and write the new record — the site
-links them in both directions and fades the one that no longer applies.
-`## Context / ## Options / ## Decision / ## Consequences` is the shape the
-styling expects.
-
-## Which sections appear
-
-By default, every section that has content — a docs file that exists, a
-changelog with at least one release, a roadmap with at least one milestone. An
-empty section is never linked.
-
-To pin the order, or to switch one off, list them in the project's frontmatter:
-
-```yaml
-sections: [readme, changelog, roadmap]
-```
-
-Named ids that have no content are still dropped, so the list is safe to write
-ahead of the files.
-
-## Colours and artwork
-
-A project declares two colours:
-
-```yaml
-accent: "#d9480f"       # light mode — must clear 4.5:1 on a pale background
-accentDark: "#ff5e1f"   # dark mode — the lighter of the two
-```
-
-`Base.astro` writes them onto `<body>`, and every page of that project is
-repainted: the monogram, links, the tab underline, checkboxes, progress bars.
-One house layout, a different identity inside it per project.
-
-A project's mark has three levels, in order of precedence:
-
-```yaml
-icon: ../../_assets/voparser-icon.png   # an image file
-glyph: code                             # a name from src/lib/icons.mjs
-monogram: vp                            # one to three characters
-```
-
-`glyph` is usually enough: the icon set carries marks for sections, tools and
-concepts, and the same names resolve in `stack:` too, so `stack: [Go, Docker,
-PostgreSQL]` picks up three icons without any extra work.
-
-Cover art is generated from the same parts as the site — frame rules, corner
-squares, the project's mark in its own colour, and its own light and dark
-palette:
-
-```bash
-npm run new:cover -- vocloud --glyph server --accent "#0e7490" --accent-dark "#22d3ee"
-```
-
-Then point at it, in both language files:
-
-```yaml
-cover: ../../_assets/vocloud-cover.svg   # wide, above every page of the project
-card:  ../../_assets/vocloud-card.svg    # the index card; falls back to cover
-```
-
-Photographs work the same way — put them in `src/content/_assets/` and Astro
-resizes and re-encodes them at build time, so hand it the largest version you
-have.
+Paths are served from `public/`. Images a post embeds in its body go in
+`src/content/_assets/` instead, where Astro resizes and re-encodes them at
+build time — hand it the largest version you have.
 
 ## Sources
 
-Rendered as a numbered list at the bottom of an overview or a documentation
-section. Only `title` is required:
+Frontmatter, not body. Rendered as a numbered list at the bottom of a post.
+Only `title` is required:
 
 ```yaml
 sources:
@@ -211,12 +117,22 @@ sources:
 ## Languages
 
 `src/pages/tr/` mirrors the English routes exactly, and `src/i18n/ui.ts` holds
-every string in both languages. A project appears in a language only when it has
-a file there — there is no silent fallback to English, which is why the
-generators always write both.
+every string in both languages. There is no silent fallback: a post appears in
+a language only when a file exists there.
 
-The language switch in the header lands on the counterpart page when one exists,
-and on that language's home page when it does not.
+English and Turkish posts keep their own slugs — a Turkish post gets a Turkish
+URL. `translationKey`, identical in both files, is what links them:
+
+```yaml
+# posts/en/intermediate-representations.md
+translationKey: ir-notes
+
+# posts/tr/ara-temsiller.md
+translationKey: ir-notes
+```
+
+The language switch in the header lands on the counterpart when there is one,
+and on that language's home page when there is not.
 
 ## Math
 
@@ -238,10 +154,7 @@ Shortcuts for common notation: `$\R$`, `$\N$`, `$\Z$`, `$\abs{x}$`,
 `$\set{1,2}$`, `$\floor{x}$`, and for compiler posts
 `$\judge{\Gamma}{e}{\tau}$` (→ Γ ⊢ e : τ), `$\derives$`, `$\steps$`, `$\lang$`.
 
-Full list and how to add more: `public/admin/katex-macros.mjs`. The file
-deliberately lives there because it has two consumers — the build imports it
-at compile time, and the CMS preview loads it in the browser — so the preview
-and the published site can never drift apart.
+Full list and how to add more: `src/lib/katex-macros.mjs`.
 
 ## For math, compilers and geometry
 
@@ -365,65 +278,6 @@ fence language. Unrecognized languages get no icon.
 On every block. On untitled blocks it appears in the corner on hover.
 Hidden when JavaScript is unavailable.
 
-## The CMS
-
-Content has two interchangeable sources, and they produce byte-identical
-pages — same ids, same fields, same rendered markdown:
-
-| Source | Where content lives | Build with |
-| --- | --- | --- |
-| `files` *(default)* | markdown under `src/content/` | `npm run build` |
-| `cms` | Payload, in `cms/content.db` | `npm run build:cms` |
-
-Payload is a **local editor, not a deployed service**. It runs only while you
-are editing; the published site is still static HTML with no database behind
-it. That is the whole reason for the SQLite file — it is committed with the
-repository, so a build anywhere reproduces the same site.
-
-```bash
-npm run cms        # http://localhost:3001/admin
-npm run dev:cms    # the site, read from the database
-npm run build:cms  # static output from the database
-```
-
-The first run asks you to create an admin user; it is stored in the same file
-and never leaves the machine.
-
-### Moving content between them
-
-```bash
-npm run cms:import   # markdown  ->  database
-```
-
-Idempotent: records that exist are updated, not duplicated, so it can be re-run
-after editing files. It never writes to `src/content/` — markdown stays exactly
-as it is, which is what makes the switch reversible.
-
-There is no export in the other direction yet. Whichever source you build from
-is the one to edit; keeping both authoritative would need a merge strategy
-nobody wants to debug.
-
-### What Payload does not hold
-
-Body text stays **markdown**, in a code field rather than a rich-text editor.
-The site's pipeline runs remark and rehype over it — KaTeX, Shiki with its
-fence metadata, mermaid, `:::tree` and `:::note`. A WYSIWYG editor would
-rewrite all of that into markup the build no longer understands.
-
-Artwork is a path, not an upload: `/assets/name.svg`, served from `public/`.
-
-### Changing a collection
-
-Edit the matching file under `cms/collections/`, then keep the two schemas in
-step — `src/content.config.ts` is what actually validates content, in both
-modes. A field that exists in only one of them is a field the other build will
-reject or ignore.
-
-```bash
-npm run cms:types      # regenerate cms/payload-types.ts
-npm run cms:importmap  # after adding a custom admin component
-```
-
 ## Search
 
 The index is built by Pagefind after `astro build`, which is why `npm run
@@ -433,10 +287,11 @@ index per language, so Turkish pages search Turkish content.
 
 ## Social cards
 
-Every project gets a 1200×630 PNG at build time, drawn by satori from the
-project's own colour and mark: `/og/<slug>.png`, `/og/tr/<slug>.png`, plus
-`/og/site.png` for everything else. Fonts are read from `src/assets/fonts/`
-rather than fetched, so a build with no network produces the same image.
+Every post gets a 1200×630 PNG at build time, drawn by satori from its own
+title and description: `/og/posts/<slug>.png`, `/og/tr/posts/<slug>.png`, plus
+`/og/site.png` for everything else. A post can override it with `ogImage`.
+Fonts are read from `src/assets/fonts/` rather than fetched, so a build with no
+network produces the same image.
 
 ## Deployment
 
@@ -451,18 +306,21 @@ sitemap, RSS and canonical links.
 
 ```
 src/
+  assets/brand/icons/  the pixel marks, inlined by filename
   components/          one job each; pages/ holds whole-page compositions
   content/             the markdown that becomes the site (an Obsidian vault)
-  content.config.ts    the schema for all five collections
+  content.config.ts    the schema for both collections
   i18n/ui.ts           every string, both languages
-  layouts/Base.astro   head, brand colour, header, footer
-  lib/projects.ts      the only place that decides what a project shows
+  layouts/Base.astro   head, meta, header, footer
+  layouts/Post.astro   a single post: header, body, contents, what comes next
+  lib/posts.ts         every query the site makes over the posts
+  lib/pixel-icons.mjs  tag -> mark
   pages/               routes; tr/ mirrors the English tree
   styles/global.css    tokens first, then components
-public/                copied verbatim: CNAME, favicon.svg
-scripts/               the generators behind npm run new:*
+public/                copied verbatim: CNAME, favicon.svg, brand/
+scripts/new-post.mjs   the generator behind npm run new
 ```
 
-`src/lib/projects.ts` is worth reading before changing anything: `projectNav()`
-decides both the tab bar and the static paths, so a route cannot exist without a
-tab pointing at it — or the reverse.
+`src/lib/posts.ts` is the only place that decides what a post list contains —
+publication, ordering, tags, translations and neighbours all resolve there, so
+a page never filters drafts on its own.

@@ -1,0 +1,51 @@
+---
+import Tag from './Tag.astro';
+import { base, formatDateShort, t, type Lang } from '../i18n/ui';
+import { slugOf, readingTime, type Post } from '../lib/posts';
+
+interface Props {
+  post: Post;
+  lang: Lang;
+}
+
+const { post, lang } = Astro.props;
+const tr_ = t(lang);
+const b = base(lang);
+const d = post.data;
+
+/* Two tags at most on a card: the third one costs a line and buys nothing. */
+const tags = d.tags.slice(0, 2);
+---
+
+<article class="post-card">
+  <a class="post-card__link" href={`${b}/posts/${slugOf(post.id)}/`}>
+    {
+      d.cover && (
+        <span class="post-card__cover">
+          <img src={d.cover} alt="" loading="lazy" decoding="async" />
+        </span>
+      )
+    }
+
+    <span class="post-card__meta meta">
+      <time datetime={d.date.toISOString()}>{formatDateShort(d.date, lang)}</time>
+      <span class="post-card__dot" aria-hidden="true">·</span>
+      <span>{readingTime(post.body ?? '')} {tr_('post.readingTime')}</span>
+    </span>
+
+    <h3 class="post-card__title">{d.title}</h3>
+    <p class="post-card__desc">{d.description}</p>
+  </a>
+
+  {
+    tags.length > 0 && (
+      <ul class="post-card__tags tag-list">
+        {tags.map((tag) => (
+          <li>
+            <Tag tag={tag} href={`${b}/tags/${tag}/`} />
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</article>

@@ -1,34 +1,30 @@
 import rss from '@astrojs/rss';
-import type { APIContext } from 'astro';
-
-import { getActivity, slugOf } from './projects';
 import { SITE } from '../consts.js';
-import { base, t, type Lang } from '../i18n/ui';
+import { getPosts, slugOf } from './posts';
+import { t, base, type Lang } from '../i18n/ui';
 
 /**
- * One feed per language carrying every project's releases. Following the site
- * means following the work, not the writing — so this is the only feed there is.
+ * One feed per language. A reader following the Turkish feed gets Turkish
+ * posts and nothing else — the site has no fallback between languages, and
+ * the feed should not invent one.
  */
-export async function changelogFeed(lang: Lang, context: APIContext) {
+export async function postsFeed(lang: Lang, site: URL | undefined) {
   const tr_ = t(lang);
   const b = base(lang);
-  const items = await getActivity(lang, 50);
+  const posts = await getPosts(lang);
 
   return rss({
-    title: `${SITE.author} — ${tr_('changelog.title')}`,
-    description: tr_('changelog.allLede'),
-    site: context.site ?? SITE.url,
+    title: `${SITE.author} — ${tr_('posts.all')}`,
+    description: tr_('site.tagline'),
+    site: site ?? SITE.url,
+    trailingSlash: true,
+    items: posts.map((post) => ({
+      title: post.data.title,
+      description: post.data.description,
+      pubDate: post.data.date,
+      link: `${b}/posts/${slugOf(post.id)}/`,
+      categories: post.data.tags,
+    })),
     customData: `<language>${lang === 'tr' ? 'tr-TR' : 'en-GB'}</language>`,
-    items: items.map(({ release, project }) => {
-      const slug = slugOf(project.id);
-      const version = release.data.unreleased ? tr_('changelog.unreleased') : release.data.version;
-      return {
-        title: `${project.data.name} ${version}`,
-        description: release.data.summary,
-        pubDate: release.data.date,
-        link: `${b}/projects/${slug}/changelog/#v${release.data.version}`,
-        categories: [project.data.name],
-      };
-    }),
   });
 }

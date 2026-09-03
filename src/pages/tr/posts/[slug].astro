@@ -1,0 +1,14 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Post from '../../../layouts/Post.astro';
+import { getPosts, slugOf } from '../../../lib/posts';
+
+export const getStaticPaths = (async () => {
+  const posts = await getPosts('tr');
+  return posts.map((post) => ({ params: { slug: slugOf(post.id) }, props: { post } }));
+}) satisfies GetStaticPaths;
+
+const { post } = Astro.props;
+---
+
+<Post post={post} />

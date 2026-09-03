@@ -1,0 +1,169 @@
+---
+import { render } from 'astro:content';
+
+import Base from './Base.astro';
+import TOC from '../components/TOC.astro';
+import Sources from '../components/Sources.astro';
+import Tag from '../components/Tag.astro';
+import PostList from '../components/PostList.astro';
+import Icon from '../components/Icon.astro';
+import {
+  getTranslation,
+  getNeighbours,
+  getRelated,
+  readingTime,
+  slugOf,
+  type Post,
+} from '../lib/posts';
+import { t, base, formatDate, type Lang } from '../i18n/ui';
+
+interface Props { post: Post }
+
+const { post } = Astro.props;
+const lang: Lang = post.data.lang;
+const tr_ = t(lang);
+const b = base(lang);
+const d = post.data;
+
+const { Content, headings } = await render(post);
+const translation = await getTranslation(post);
+const { newer, older } = await getNeighbours(post);
+const related = await getRelated(post);
+
+const mins = readingTime(post.body ?? '');
+const tocItems = headings.filter((h) => h.depth >= 2 && h.depth <= 4);
+const showToc = d.toc && tocItems.length >= 2;
+
+/* The language switch lands on the translation when there is one; without it
+   Base sends the reader to that language's home rather than a dead URL. */
+const altPath = translation
+  ? `${base(translation.data.lang)}/posts/${slugOf(translation.id)}/`
+  : undefined;
+---
+
+<Base
+  lang={lang}
+  title={d.title}
+  description={d.description}
+  path={Astro.url.pathname}
+  altPath={altPath}
+  ogImage={d.ogImage ?? `/og/posts/${slugOf(post.id)}.png`}
+  article
+  published={d.date}
+  modified={d.updated}
+>
+  <div class="wrap">
+    <article class="post" data-solo={showToc ? undefined : ''}>
+      <header class="post-header band" data-rule="bottom">
+        <div class="post-header__inner">
+        <p class="post-header__meta meta">
+          <time datetime={d.date.toISOString()}>{formatDate(d.date, lang)}</time>
+          <span class="post-header__dot" aria-hidden="true">·</span>
+          <span>{mins} {tr_('post.readingTime')}</span>
+          {
+            d.updated && (
+              <>
+                <span class="post-header__dot" aria-hidden="true">·</span>
+                <span>{tr_('post.updated')} {formatDate(d.updated, lang)}</span>
+              </>
+            )
+          }
+        </p>
+
+        <h1>{d.title}</h1>
+        <p class="lede">{d.description}</p>
+
+        {
+          d.tags.length > 0 && (
+            <ul class="tag-list post-header__tags">
+              {d.tags.map((tag) => (
+                <li>
+                  <Tag tag={tag} href={`${b}/tags/${tag}/`} />
+                </li>
+              ))}
+            </ul>
+          )
+        }
+        </div>
+      </header>
+
+      {
+        d.cover && (
+          <figure class="post-cover band" data-rule="bottom">
+            <img src={d.cover} alt="" loading="eager" decoding="async" />
+          </figure>
+        )
+      }
+
+      <div class="doc-grid band" data-rule="top" data-toc={showToc ? '' : undefined}>
+        <div class="doc-grid__body">
+          {
+            showToc && (
+              <details class="toc-inline">
+                <summary>{tr_('post.toc')}</summary>
+                <TOC headings={headings} label={tr_('post.toc')} />
+              </details>
+            )
+          }
+
+          <div class="prose">
+            <Content />
+          </div>
+
+          <Sources sources={d.sources} label={tr_('post.sources')} />
+        </div>
+
+        {
+          showToc && (
+            <aside class="toc-aside">
+              <div class="toc-aside__sticky">
+                <TOC headings={headings} label={tr_('post.toc')} />
+              </div>
+            </aside>
+          )
+        }
+      </div>
+
+      {
+        (newer || older) && (
+          <nav class="post-nav band" data-rule="top" aria-label={tr_('a11y.postNav')}>
+            <div class="post-nav__cell">
+              {older && (
+                <a href={`${b}/posts/${slugOf(older.id)}/`}>
+                  <span class="post-nav__dir meta">
+                    <Icon name="arrow" size={12} class="post-nav__arrow post-nav__arrow--back" />
+                    {tr_('post.older')}
+                  </span>
+                  <span class="post-nav__title">{older.data.title}</span>
+                </a>
+              )}
+            </div>
+            <div class="post-nav__cell post-nav__cell--next">
+              {newer && (
+                <a href={`${b}/posts/${slugOf(newer.id)}/`}>
+                  <span class="post-nav__dir meta">
+                    {tr_('post.newer')}
+                    <Icon name="arrow" size={12} class="post-nav__arrow" />
+                  </span>
+                  <span class="post-nav__title">{newer.data.title}</span>
+                </a>
+              )}
+            </div>
+          </nav>
+        )
+      }
+
+      {
+        related.length > 0 && (
+          <section class="section band" data-rule="top" aria-labelledby="post-related">
+            <div class="section__head">
+              <h2 class="section__label" id="post-related">{tr_('post.related')}</h2>
+              <a class="section__more meta" href={`${b}/posts/`}>{tr_('post.backToPosts')} →</a>
+            </div>
+            <PostList posts={related} lang={lang} compact />
+          </section>
+        )
+      }
+    </article>
+  </div>
+</Base>

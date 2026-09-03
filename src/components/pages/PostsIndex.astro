@@ -1,0 +1,53 @@
+---
+import Base from '../../layouts/Base.astro';
+import PostList from '../PostList.astro';
+import Empty from '../Empty.astro';
+import Icon from '../Icon.astro';
+import { getPosts, getPostsByYear } from '../../lib/posts';
+import { t, base, type Lang } from '../../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const tr_ = t(lang);
+const b = base(lang);
+
+const posts = await getPosts(lang);
+const years = await getPostsByYear(lang);
+---
+
+<Base
+  lang={lang}
+  title={tr_('posts.all')}
+  description={tr_('posts.lede')}
+  path={`${b}/posts/`}
+  altPath={lang === 'en' ? '/tr/posts/' : '/posts/'}
+>
+  <div class="wrap">
+    <section class="hero band" data-rule="bottom">
+      <h1>{tr_('posts.all')}</h1>
+      <p class="lede">{tr_('posts.lede')}</p>
+      <p class="hero__count meta">
+        <Icon name="markdown" size={13} />
+        {posts.length} {tr_('posts.count')}
+      </p>
+    </section>
+
+    {
+      years.length === 0 ? (
+        <div class="section band" data-rule="top">
+          <Empty text={tr_('posts.empty')} icon="markdown" />
+        </div>
+      ) : (
+        years.map(({ year, posts }) => (
+          <section class="section band" data-rule="top" aria-label={String(year)}>
+            <div class="section__head">
+              <h2 class="section__label">{year}</h2>
+              <span class="section__more meta">{posts.length}</span>
+            </div>
+            <PostList posts={posts} lang={lang} />
+          </section>
+        ))
+      )
+    }
+  </div>
+</Base>

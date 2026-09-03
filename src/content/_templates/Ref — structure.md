@@ -73,22 +73,30 @@ The contents column appears once a page has two or more `##` headings.
 ## Links between pages
 
 ````markdown
-[voparser](/projects/voparser/)                       overview
-[changelog](/projects/voparser/changelog/)          a section
-[0.2.0](/projects/voparser/changelog/#v0.2.0)       one release
-[mimari](/tr/projects/voparser/architecture/)       Turkish
+[another post](/posts/some-slug/)          a post
+[compilers](/tags/compilers/)              a tag
+[bir yazı](/tr/posts/bir-slug/)            Turkish
+[a heading](/posts/some-slug/#the-heading) a section of a post
 ````
 
 Use site paths, not Obsidian `[[wiki links]]` — those do not survive the build.
 
 ## Translations
 
-Nothing to declare: the EN and TR files of a project share a filename, and that
-is what links them. `projects/en/voparser.md` and `projects/tr/voparser.md` are the
-same project, so the language switch in the header jumps between them instead of
+`translationKey` links a post to its counterpart: put the same key in both
+files and the language switch in the header jumps between them instead of
 falling back to the other language's home page.
 
-A project that exists in one language only simply does not appear in the other.
+```yaml
+# posts/en/intermediate-representations.md
+translationKey: ir-notes
+
+# posts/tr/ara-temsiller.md
+translationKey: ir-notes
+```
+
+The slugs stay independent, so a Turkish post keeps a Turkish URL. A post with
+no key, or one whose counterpart is still a draft, simply has no switch.
 
 ## Publishing
 

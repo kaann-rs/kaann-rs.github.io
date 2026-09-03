@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 200" role="img" aria-label="Kaynak metinden sözdizim ağacına giden boru hattı">
+  <style>
+    .box   { fill: #4f46e5; }
+    .box-2 { fill: #6366f1; }
+    .box-3 { fill: #818cf8; }
+    .lbl   { fill: #fbfbfe; font: 600 15px Inter, system-ui, sans-serif; }
+    .sub   { fill: #c7d2fe; font: 400 12px ui-monospace, monospace; }
+    .arrow { stroke: #818cf8; stroke-width: 2; fill: none; }
+    .cap   { fill: #918da8; font: 400 12px ui-monospace, monospace; }
+  </style>
+
+  <rect class="box"   x="12"  y="60" width="150" height="66" rx="8"/>
+  <text class="lbl"   x="87"  y="88"  text-anchor="middle">Kaynak</text>
+  <text class="sub"   x="87"  y="108" text-anchor="middle">let x = 1 + 2</text>
+
+  <path class="arrow" d="M170 93 H222" marker-end="url(#a)"/>
+  <text class="cap"   x="196" y="80"  text-anchor="middle">lex</text>
+
+  <rect class="box-2" x="230" y="60" width="150" height="66" rx="8"/>
+  <text class="lbl"   x="305" y="88"  text-anchor="middle">Token akışı</text>
+  <text class="sub"   x="305" y="108" text-anchor="middle">LET IDENT EQ …</text>
+
+  <path class="arrow" d="M388 93 H440" marker-end="url(#a)"/>
+  <text class="cap"   x="414" y="80"  text-anchor="middle">parse</text>
+
+  <rect class="box-3" x="448" y="60" width="150" height="66" rx="8"/>
+  <text class="lbl"   x="523" y="88"  text-anchor="middle" fill="#161238">Sözdizim ağacı</text>
+  <text class="sub"   x="523" y="108" text-anchor="middle" fill="#2a2480">LetStmt</text>
+
+  <path class="arrow" d="M606 93 H658" marker-end="url(#a)"/>
+  <circle cx="684" cy="93" r="14" fill="none" stroke="#818cf8" stroke-width="2"/>
+  <path d="M678 93 l5 5 l9 -11" stroke="#818cf8" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#818cf8"/>
+    </marker>
+  </defs>
+</svg>

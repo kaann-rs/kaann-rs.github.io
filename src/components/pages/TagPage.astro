@@ -1,0 +1,43 @@
+---
+import Base from '../../layouts/Base.astro';
+import PostList from '../PostList.astro';
+import PixelIcon from '../PixelIcon.astro';
+import { t, base, type Lang } from '../../i18n/ui';
+import type { Post } from '../../lib/posts';
+
+interface Props {
+  lang: Lang;
+  tag: string;
+  posts: Post[];
+}
+
+const { lang, tag, posts } = Astro.props;
+const tr_ = t(lang);
+const b = base(lang);
+const count = posts.length;
+const noun = count === 1 ? tr_('tags.countOne') : tr_('tags.count');
+---
+
+<Base
+  lang={lang}
+  title={`${tr_('tags.postsIn')}: ${tag}`}
+  description={`${count} ${noun} — ${tag}`}
+  path={`${b}/tags/${tag}/`}
+>
+  <div class="wrap">
+    <section class="hero band" data-rule="bottom">
+      <p class="hero__eyebrow meta">
+        <a href={`${b}/tags/`}>{tr_('tags.title')}</a>
+      </p>
+      <h1 class="hero__tag">
+        <PixelIcon name={tag} size={34} class="hero__tag-mark" />
+        {tag}
+      </h1>
+      <p class="hero__count meta">{count} {noun}</p>
+    </section>
+
+    <div class="section band" data-rule="top">
+      <PostList posts={posts} lang={lang} />
+    </div>
+  </div>
+</Base>

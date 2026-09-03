@@ -1,0 +1,26 @@
+---
+import PixelIcon from './PixelIcon.astro';
+import { hasPixelIcon } from '../lib/pixel-icons.mjs';
+
+interface Props {
+  tag: string;
+  href: string;
+  /** Shown as a trailing count when given — the tag index uses it. */
+  count?: number;
+  /** Larger cell form, used on the tag index. */
+  size?: 'sm' | 'md';
+}
+
+const { tag, href, count, size = 'sm' } = Astro.props;
+
+/* Every tag carries a mark; this only records whether the set had one for
+   this subject specifically, so a named mark can read a shade stronger than
+   the document the rest fall back to. */
+const named = hasPixelIcon(tag);
+---
+
+<a class="tag" href={href} data-size={size} data-named={named ? '' : undefined}>
+  <PixelIcon name={tag} size={size === 'md' ? 18 : 13} />
+  <span class="tag__name">{tag}</span>
+  {count !== undefined && <span class="tag__count">{count}</span>}
+</a>

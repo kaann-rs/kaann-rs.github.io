@@ -1,8 +1,8 @@
 /**
  * Site-wide constants.
  *
- * This site is a project showcase, not a blog: the work speaks, and each
- * project keeps its own overview, changelog and roadmap.
+ * This site is a blog: notes on the work rather than a catalogue of it.
+ * Posts carry tags; tags are the only taxonomy.
  */
 
 export const SITE = {
@@ -20,28 +20,15 @@ export const DEFAULT_LOCALE = 'en';
 
 /**
  * The house colour. One signature accent, light and dark — no theme picker.
- * A project may override it per page with its own accent (see the `accent`
- * field in the projects collection); this is the fallback everything else uses.
+ * Everything else in global.css is derived from it.
  */
 export const BRAND = {
   light: '#d9480f',
   dark: '#ff5e1f',
 };
 
-/**
- * Project lifecycle states. The id is what goes in a project's frontmatter;
- * the label comes from i18n (`status.<id>`), the colour from global.css.
- */
-export const STATUSES = /** @type {const} */ ([
-  'active',
-  'stable',
-  'maintenance',
-  'experiment',
-  'archived',
-]);
+/** How many posts the home page shows before linking to the full archive. */
+export const HOME_POSTS = 8;
 
-/** Release kinds — decides the shape of the badge on a changelog entry. */
-export const RELEASE_KINDS = /** @type {const} */ (['major', 'minor', 'patch', 'prerelease']);
-
-/** Roadmap milestone states. */
-export const MILESTONE_STATES = /** @type {const} */ (['shipped', 'building', 'planned', 'exploring']);
+/** Words per minute used for the reading-time estimate on a post. */
+export const WPM = 200;

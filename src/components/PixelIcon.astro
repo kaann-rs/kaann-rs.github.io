@@ -1,0 +1,43 @@
+---
+import { pixelIcon } from '../lib/pixel-icons.mjs';
+
+interface Props {
+  /** Tag or icon name — resolved through the brand kit's aliases. */
+  name: string;
+  size?: number;
+  class?: string;
+}
+
+const { name, size = 14, class: className } = Astro.props;
+
+const raw = pixelIcon(name);
+
+/* The kit ships each mark at its drawn size. Keep the viewBox, drop the fixed
+   width/height and the label: here the mark sits beside its own text, so it is
+   decorative and the size is the caller's business. */
+const viewBox = raw?.match(/viewBox="([^"]+)"/)?.[1] ?? '0 0 16 16';
+const body = raw
+  ?.replace(/^[\s\S]*?<svg[^>]*>/, '')
+  .replace(/<\/svg>\s*$/, '')
+  .trim();
+
+/* Non-square marks (the language mascots) keep their aspect ratio rather than
+   being squeezed into a square box. */
+const [, , vw, vh] = viewBox.split(/\s+/).map(Number);
+const width = Math.round(size * (vw / vh));
+---
+
+{
+  body && (
+    <svg
+      class:list={['pixel-icon', className]}
+      width={width}
+      height={size}
+      viewBox={viewBox}
+      shape-rendering="crispEdges"
+      aria-hidden="true"
+      focusable="false"
+      set:html={body}
+    />
+  )
+}

@@ -6,7 +6,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import CodeEnhance from '../components/CodeEnhance.astro';
 import Diagrams from '../components/Diagrams.astro';
-import { SITE, BRAND } from '../consts.js';
+import { SITE } from '../consts.js';
 import { t, base, type Lang } from '../i18n/ui';
 
 interface Props {
@@ -17,15 +17,12 @@ interface Props {
   altPath?: string;
   /** This page's own path, for canonical and hreflang. */
   path?: string;
-  /**
-   * A project's colours. Passing them repaints the whole page in that
-   * project's accent — this is what gives each project its own identity
-   * without a second design.
-   */
-  accent?: string;
-  accentDark?: string;
   /** Social card to advertise; defaults to the site's own. */
   ogImage?: string;
+  /** A post rather than a page — changes og:type and adds article dates. */
+  article?: boolean;
+  published?: Date;
+  modified?: Date;
 }
 
 const {
@@ -34,9 +31,10 @@ const {
   description,
   altPath,
   path = '/',
-  accent,
-  accentDark,
   ogImage = '/og/site.png',
+  article = false,
+  published,
+  modified,
 } = Astro.props;
 
 const tr_ = t(lang);
@@ -45,14 +43,6 @@ const isHome = path.replace(/\/$/, '') === base(lang);
 const fullTitle = isHome ? `${SITE.author} — ${title}` : `${title} · ${SITE.author}`;
 const canonical = new URL(path, Astro.site ?? 'https://example.com');
 const ogUrl = new URL(ogImage, canonical);
-
-/**
- * The accent lives on <body> so a project page can hand in its own colour;
- * global.css derives everything else (links, marks, soft fills) from it.
- */
-const brandStyle =
-  `--brand-light:${accent ?? BRAND.light};` +
-  `--brand-dark:${accentDark ?? accent ?? BRAND.dark};`;
 ---
 
 <!doctype html>
@@ -64,10 +54,10 @@ const brandStyle =
     <meta name="description" content={desc} />
     <link rel="canonical" href={canonical} />
 
-    <meta name="theme-color" content="#fffbf5" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#151414" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#fbfbfe" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0e0d16" media="(prefers-color-scheme: dark)" />
 
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={article ? 'article' : 'website'} />
     <meta property="og:site_name" content={SITE.author} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={desc} />
@@ -79,14 +69,21 @@ const brandStyle =
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content={ogUrl} />
 
+    {article && published && (
+      <meta property="article:published_time" content={published.toISOString()} />
+    )}
+    {article && modified && (
+      <meta property="article:modified_time" content={modified.toISOString()} />
+    )}
+
     <link rel="alternate" hreflang="en" href={new URL('/', canonical)} />
     <link rel="alternate" hreflang="tr" href={new URL('/tr/', canonical)} />
 
     <link
       rel="alternate"
       type="application/rss+xml"
-      title={`${SITE.author} — ${tr_('changelog.title')}`}
-      href={`${base(lang)}/changelog/rss.xml`}
+      title={`${SITE.author} — ${tr_('posts.all')}`}
+      href={`${base(lang)}/rss.xml`}
     />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
@@ -100,7 +97,7 @@ const brandStyle =
     />
   </head>
 
-  <body style={brandStyle} data-brand={accent ? 'project' : 'house'}>
+  <body>
     <a class="skip-link" href="#content">{tr_('a11y.skip')}</a>
     <Header lang={lang} altPath={altPath} />
     <main id="content" data-pagefind-body data-pagefind-meta={`title:${title}`}>

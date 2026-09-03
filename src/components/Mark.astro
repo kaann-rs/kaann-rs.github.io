@@ -1,27 +1,45 @@
 ---
 /**
- * The house mark — a K held inside a square.
+ * The house mark — the cloud from the brand kit.
  *
- * It inherits `currentColor`, so it takes the brand colour in the header and a
- * project's own accent wherever a project is being shown.
+ * Unlike the icon sets this one keeps its own colours: the mark is the one
+ * place the full indigo ramp appears, so it stays itself on either surface.
+ * The gradient is in user space, which is what lets the three overlapping
+ * shapes read as a single silhouette instead of three seams.
  */
 interface Props {
   size?: number;
   class?: string;
 }
-const { size = 18, class: klass } = Astro.props;
+const { size = 20, class: klass } = Astro.props;
+
+/* One page can hold several marks — header, footer, an OG fallback — and a
+   repeated gradient id would make every one of them use the first. */
+const id = `mark-${Math.random().toString(36).slice(2, 9)}`;
+const width = Math.round(size * (26 / 18));
 ---
 
 <svg
-  class={klass}
-  width={size}
+  class:list={['brand-mark', klass]}
+  width={width}
   height={size}
-  viewBox="0 0 20 20"
+  viewBox="0 0 26 18"
   fill="none"
-  stroke="currentColor"
   aria-hidden="true"
   focusable="false"
 >
-  <rect x="0.9" y="0.9" width="18.2" height="18.2" rx="4.4" stroke-width="1.5" />
-  <path d="M7 5.4v9.2M13.4 5.6 8.4 9.8l5 4.6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+  <defs>
+    <linearGradient id={id} gradientUnits="userSpaceOnUse" x1="2" y1="1" x2="23" y2="18">
+      <stop offset="0" stop-color="#A5B4FC" />
+      <stop offset="0.35" stop-color="#6366F1" />
+      <stop offset="0.75" stop-color="#4F46E5" />
+      <stop offset="1" stop-color="#3730A3" />
+    </linearGradient>
+  </defs>
+
+  <g fill={`url(#${id})`}>
+    <circle cx="9.5" cy="7.2" r="5.6" />
+    <circle cx="17" cy="9.8" r="6.6" />
+    <rect x="2.4" y="9" width="20" height="8.6" rx="4.3" />
+  </g>
 </svg>

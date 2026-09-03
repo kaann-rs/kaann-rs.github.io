@@ -4,61 +4,52 @@ This vault is the site's `src/content/` folder. Files here **are** the site —
 editing a note edits the published page.
 
 ```
-projects/<lang>/<slug>.md              a project: identity, colours, overview
-docs/<lang>/<slug>/<section>.md        readme, architecture, structure, state,
-                                       learned — and any section you invent
-releases/<lang>/<slug>/<version>.md    one changelog entry
-roadmaps/<lang>/<slug>.md              milestones and their checklists
-benchmarks/<lang>/<slug>.md            measured comparisons
-decisions/<lang>/<slug>/<nnn>-x.md     one decision record, never rewritten
-pages/<lang>/about.md                  the About page
-_assets/                               icons, covers, card art
-_templates/                            skeletons + syntax reference
+posts/<lang>/<slug>.md     a post; the filename is its URL
+pages/<lang>/about.md      the About page
+_assets/                   images a post points at
+_templates/                skeletons + syntax reference
 ```
 
-`<lang>` is `en` or `tr`. `<slug>` is the project's URL and the only thing
-linking its English and Turkish files — keep the two filenames identical.
+`<lang>` is `en` or `tr`. Folders starting with `_` are ignored by the build.
 
-Folders starting with `_` are ignored by the build.
+English and Turkish posts keep their own slugs — a Turkish post gets a Turkish
+URL. What links the two is `translationKey`, identical in both files.
 
 ## Don't hand-write frontmatter
 
 From the repository root:
 
 ```bash
-npm run new:project -- voparser --mono vp --accent "#7e22ce"
-npm run new:release -- voparser 0.1.0
-npm run new:doc     -- voparser architecture
-npm run new:cover   -- voparser --glyph code --accent "#7e22ce"
+npm run new -- en "Intermediate representations" --tags compilers,rust
+npm run new -- tr "Ara temsiller" --key ir-notes --tags compilers,rust
 ```
 
-Each command writes both languages at once, so EN and TR never drift apart.
+Or in Obsidian, from `_templates/`: **Post (EN)** and **Yazi (TR)**.
 
-## Forgot the syntax?
+Required: `title`, `description`, `date`, `lang`. Everything else has a
+default — see `_templates/Ref — frontmatter.md`.
 
-`_templates/` has it all, with live examples to copy:
+## Tags are the only taxonomy
 
-| File | Covers |
-| --- | --- |
-| `Ref — frontmatter` | every field of every collection |
-| `Ref — code` | `title:` `hl:` `ln:`, diff markers, mermaid |
-| `Ref — math` | `$…$`, macros, theorem/proof boxes |
-| `Ref — structure` | trees, figures, tables, links, translations |
+Lowercase, hyphenated, and reused rather than invented: every distinct tag
+becomes its own page, so three spellings of one subject make three near-empty
+pages.
 
-`Proje` and `Surum` are insertable skeletons —
-`Ctrl+P` → "Insert template".
+Most tags carry a pixel mark from the brand kit — `rust`, `python`, `go`,
+`docker`, `database`, `security`, `performance`, `shell`, `philosophy` and
+about thirty more. Anything unmapped gets the document mark. The table lives
+in `src/lib/pixel-icons.mjs`.
 
-## Turning a section off
+## Drafts
 
-A project shows every section that has content. To pin the list — or to hide
-one — name them in the project's frontmatter:
+`draft: true` keeps a post out of the build. It still shows in `npm run dev`,
+so you can read it in place before publishing.
 
-```yaml
-sections: [readme, changelog, decisions, benchmarks, learned]
-```
+## Writing
 
-Built-in ids: `readme` · `changelog` · `releases` · `roadmap` · `decisions` ·
-`benchmarks` · `learned` · `architecture` · `structure` · `state`.
+Markdown, plus the extras the site adds: callout boxes, trees, numbered
+figures, KaTeX maths and annotated code blocks. All of it is in
+`_templates/Ref — *.md`, with live examples you can copy.
 
 ## Publishing
 

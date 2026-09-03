@@ -15,6 +15,10 @@ const tr_ = t(lang);
 </div>
 
 <script>
+  /* The copy button stays hidden until this runs: it has no icon and no label
+     until the lines below give it one. */
+  document.documentElement.classList.add('js');
+
   const i18n = document.getElementById('code-i18n');
   const COPY = i18n?.dataset.copy ?? 'Copy';
   const COPIED = i18n?.dataset.copied ?? 'Copied';

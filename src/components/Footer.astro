@@ -1,6 +1,6 @@
 ---
 import Icon from './Icon.astro';
-import Mark from './Mark.astro';
+import Wordmark from './Wordmark.astro';
 import { SITE } from '../consts.js';
 import { t, base, type Lang } from '../i18n/ui';
 
@@ -11,7 +11,7 @@ const b = base(lang);
 const year = new Date().getFullYear();
 
 const links = [
-  { href: `${b}/changelog/rss.xml`, label: 'RSS', icon: 'rss' },
+  { href: `${b}/rss.xml`, label: 'RSS', icon: 'rss' },
   { href: SITE.github, label: tr_('footer.github'), icon: 'repo' },
   { href: SITE.repo, label: tr_('footer.source'), icon: 'code' },
   { href: `mailto:${SITE.email}`, label: tr_('footer.email'), icon: 'mail' },
@@ -21,8 +21,8 @@ const links = [
 <footer class="site-footer">
   <div class="wrap site-footer__inner meta">
     <span class="site-footer__sig">
-      <Mark size={15} class="site-footer__mark" />
-      © {year} {SITE.author}
+      <Wordmark size={16} />
+      <span class="site-footer__copy">© {year} {SITE.author}</span>
     </span>
     <nav class="site-footer__links" aria-label="Footer">
       {

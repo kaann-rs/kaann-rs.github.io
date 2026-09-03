@@ -1,21 +1,21 @@
 import type { APIContext } from 'astro';
 
 import { renderCard, type CardInput } from '../../lib/og';
-import { getProjects, slugOf } from '../../lib/projects';
+import { getPosts, slugOf, readingTime } from '../../lib/posts';
 import { SITE } from '../../consts.js';
-import { t, LOCALES_ALL, type Lang } from '../../i18n/ui';
+import { t, formatDateShort, LOCALES_ALL, type Lang } from '../../i18n/ui';
 
 /**
- * One social card per project per language, plus a card for the site itself.
+ * One social card per post per language, plus a card for the site itself.
  *
- *   /og/site.png            the home page and everything without its own card
- *   /og/<slug>.png          a project, English
- *   /og/tr/<slug>.png       the same project in Turkish
+ *   /og/site.png                the home page and everything without its own
+ *   /og/posts/<slug>.png        a post, English
+ *   /og/tr/posts/<slug>.png     a post, Turkish
  */
 export async function getStaticPaths() {
   const paths: { params: { card: string }; props: { card: CardInput } }[] = [];
 
-  for (const lang of LOCALES_ALL) {
+  for (const lang of LOCALES_ALL as readonly Lang[]) {
     const tr_ = t(lang);
     const prefix = lang === 'en' ? '' : 'tr/';
 
@@ -26,25 +26,25 @@ export async function getStaticPaths() {
           card: {
             title: SITE.author,
             subtitle: tr_('site.tagline'),
-            monogram: 'K',
-            facts: [tr_('nav.projects'), tr_('nav.changelog')],
+            facts: [tr_('nav.posts'), tr_('nav.tags')],
           },
         },
       });
     }
 
-    for (const project of await getProjects(lang)) {
-      const d = project.data;
+    for (const post of await getPosts(lang)) {
+      const d = post.data;
       paths.push({
-        params: { card: `${prefix}${slugOf(project.id)}` },
+        params: { card: `${prefix}posts/${slugOf(post.id)}` },
         props: {
           card: {
-            title: d.name,
-            subtitle: d.tagline,
-            eyebrow: SITE.author,
-            monogram: d.monogram,
-            accent: d.accentDark ?? d.accent,
-            facts: [tr_(`status.${d.status}`), ...d.stack.slice(0, 3)],
+            title: d.title,
+            subtitle: d.description,
+            facts: [
+              formatDateShort(d.date, lang),
+              `${readingTime(post.body ?? '')} ${tr_('post.readingTime')}`,
+              ...d.tags.slice(0, 2),
+            ],
           },
         },
       });

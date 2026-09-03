@@ -1,0 +1,45 @@
+---
+import Empty from './Empty.astro';
+import { base, formatDateShort, t, type Lang } from '../i18n/ui';
+import { slugOf, readingTime, type Post } from '../lib/posts';
+
+interface Props {
+  posts: Post[];
+  lang: Lang;
+  /** Drop the description and reading time — the dense form for a sidebar rail. */
+  compact?: boolean;
+}
+
+const { posts, lang, compact = false } = Astro.props;
+const tr_ = t(lang);
+const b = base(lang);
+---
+
+{
+  posts.length === 0 ? (
+    <Empty text={tr_('posts.empty')} icon="markdown" />
+  ) : (
+    <ul class="post-list band" data-compact={compact ? '' : undefined}>
+      {posts.map((p) => (
+        <li class="post-list__row">
+          <a class="post-list__link" href={`${b}/posts/${slugOf(p.id)}/`}>
+            <time class="post-list__date meta" datetime={p.data.date.toISOString()}>
+              {formatDateShort(p.data.date, lang)}
+            </time>
+
+            <span class="post-list__body">
+              <span class="post-list__title">{p.data.title}</span>
+              {!compact && <span class="post-list__desc">{p.data.description}</span>}
+            </span>
+
+            {!compact && (
+              <span class="post-list__read meta">
+                {readingTime(p.body ?? '')} {tr_('post.readingTime')}
+              </span>
+            )}
+          </a>
+        </li>
+      ))}
+    </ul>
+  )
+}

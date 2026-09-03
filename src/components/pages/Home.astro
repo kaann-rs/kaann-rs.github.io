@@ -1,11 +1,13 @@
 ---
 import Base from '../../layouts/Base.astro';
-import ProjectCard from '../ProjectCard.astro';
-import ActivityFeed from '../ActivityFeed.astro';
-import ActivityStrip from '../ActivityStrip.astro';
+import PostCard from '../PostCard.astro';
+import PixelIcon from '../PixelIcon.astro';
+import PostList from '../PostList.astro';
+import Tag from '../Tag.astro';
 import Empty from '../Empty.astro';
 import Icon from '../Icon.astro';
-import { getProjects, getActivity, latestRelease, slugOf, getReleases } from '../../lib/projects';
+import { getPosts, getTags } from '../../lib/posts';
+import { HOME_POSTS } from '../../consts.js';
 import { t, base, formatDateShort, type Lang } from '../../i18n/ui';
 
 interface Props { lang: Lang }
@@ -13,44 +15,56 @@ const { lang } = Astro.props;
 const tr_ = t(lang);
 const b = base(lang);
 
-const projects = await getProjects(lang);
-const featured = projects.slice(0, 6);
+const posts = await getPosts(lang);
+const tags = await getTags(lang);
 
-/** One lookup per card, resolved up front so the template stays flat. */
-const cards = await Promise.all(
-  featured.map(async (project) => ({
-    project,
-    latest: await latestRelease(lang, slugOf(project.id)),
-  }))
-);
+/* The lead: whatever is marked featured, or simply the newest two. The rest
+   fall into the list below, so nothing is shown twice — and the list only
+   appears when it has something the cards did not already show. */
+const marked = posts.filter((p) => p.data.featured);
+const lead = (marked.length > 0 ? marked : posts).slice(0, 2);
+const leadIds = new Set(lead.map((p) => p.id));
+const rest = posts.filter((p) => !leadIds.has(p.id)).slice(0, HOME_POSTS);
 
-const activity = await getActivity(lang, 6);
+/* Two sections, never the same heading twice: the cards are "Featured" only
+   when something was actually marked, and the list underneath is whatever
+   comes after them. */
+const leadLabel = marked.length > 0 ? tr_('home.featured') : tr_('home.recent');
+const restLabel = marked.length > 0 ? tr_('home.recent') : tr_('home.earlier');
 
-/* A three-cell ledger under the hero: what exists, how much has shipped, and
-   when. It is the shortest honest answer to "is this thing alive?". */
-const releases = await getReleases(lang);
-const newest = releases.find((r) => !r.data.unreleased);
+/* A three-cell ledger under the hero: how much there is, across how many
+   subjects, and whether any of it is recent. */
 const stats = [
-  { icon: 'package', label: tr_('home.statProjects'), value: String(projects.length) },
-  { icon: 'releases', label: tr_('home.statReleases'), value: String(releases.length) },
+  { icon: 'markdown', label: tr_('home.statPosts'), value: String(posts.length) },
+  { icon: 'target', label: tr_('home.statTags'), value: String(tags.length) },
   {
     icon: 'clock',
     label: tr_('home.statLatest'),
-    value: newest ? formatDateShort(newest.data.date, lang) : tr_('home.statNone'),
+    value: posts[0] ? formatDateShort(posts[0].data.date, lang) : tr_('home.statNone'),
   },
 ];
 ---
 
 <Base
   lang={lang}
-  title={tr_('site.tagline')}
+  title={tr_('home.title')}
+  description={tr_('site.tagline')}
   path={`${b}/`}
   altPath={lang === 'en' ? '/tr/' : '/'}
 >
   <div class="wrap">
-    <section class="hero band" data-rule="bottom">
-      <h1>{tr_('home.title')}</h1>
-      <p class="lede">{tr_('home.lede')}</p>
+    <section class="hero hero--art band" data-rule="bottom">
+      <div class="hero__text">
+        <h1>{tr_('home.title')}</h1>
+        <p class="lede">{tr_('home.lede')}</p>
+      </div>
+
+      {/* The two marks the kit draws at full size — a scene rather than an
+          icon, so the home page carries the brand without a photograph. */}
+      <div class="hero__art" aria-hidden="true">
+        <PixelIcon name="bulut" size={104} class="hero__art-cloud" />
+        <PixelIcon name="yengec-rust" size={76} class="hero__art-crab" />
+      </div>
     </section>
 
     <dl class="stats band" data-rule="top">
@@ -67,40 +81,69 @@ const stats = [
       }
     </dl>
 
-    <section class="section band" data-rule="top" aria-labelledby="home-projects">
-      <div class="section__head">
-        <h2 class="section__label" id="home-projects">{tr_('home.projects')}</h2>
-        {
-          projects.length > featured.length && (
-            <a class="section__more meta" href={`${b}/projects/`}>
-              {tr_('home.allProjects')} →
-            </a>
-          )
-        }
-      </div>
+    {
+      lead.length > 0 && (
+        <section class="section band" data-rule="top" aria-labelledby="home-lead">
+          <div class="section__head">
+            <h2 class="section__label" id="home-lead">{leadLabel}</h2>
+            {rest.length === 0 && posts.length > lead.length && (
+              <a class="section__more meta" href={`${b}/posts/`}>
+                {tr_('home.allPosts')} →
+              </a>
+            )}
+          </div>
 
-      {
-        cards.length === 0 ? (
-          <Empty text={tr_('projects.empty')} icon="package" />
-        ) : (
           <div class="grid band">
-            {cards.map(({ project, latest }) => (
-              <ProjectCard project={project} lang={lang} latest={latest} />
+            {lead.map((post) => (
+              <PostCard post={post} lang={lang} />
             ))}
           </div>
-        )
-      }
-    </section>
+        </section>
+      )
+    }
 
-    <ActivityStrip items={await getActivity(lang)} lang={lang} />
+    {
+      rest.length > 0 && (
+        <section class="section band" data-rule="top" aria-labelledby="home-rest">
+          <div class="section__head">
+            <h2 class="section__label" id="home-rest">{restLabel}</h2>
+            {posts.length > lead.length + rest.length && (
+              <a class="section__more meta" href={`${b}/posts/`}>
+                {tr_('home.allPosts')} →
+              </a>
+            )}
+          </div>
 
-    <section class="section band" data-rule="top" aria-labelledby="home-activity">
-      <div class="section__head">
-        <h2 class="section__label" id="home-activity">{tr_('home.activity')}</h2>
-        <a class="section__more meta" href={`${b}/changelog/`}>{tr_('home.allChanges')} →</a>
-      </div>
+          <PostList posts={rest} lang={lang} />
+        </section>
+      )
+    }
 
-      <ActivityFeed items={activity} lang={lang} />
-    </section>
+    {
+      posts.length === 0 && (
+        <div class="section band" data-rule="top">
+          <Empty text={tr_('posts.empty')} icon="markdown" />
+        </div>
+      )
+    }
+
+    {
+      tags.length > 0 && (
+        <section class="section band" data-rule="top" aria-labelledby="home-tags">
+          <div class="section__head">
+            <h2 class="section__label" id="home-tags">{tr_('home.browseTags')}</h2>
+            <a class="section__more meta" href={`${b}/tags/`}>{tr_('tags.all')} →</a>
+          </div>
+
+          <ul class="tag-list">
+            {tags.slice(0, 12).map(({ tag, count }) => (
+              <li>
+                <Tag tag={tag} href={`${b}/tags/${tag}/`} count={count} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
   </div>
 </Base>
