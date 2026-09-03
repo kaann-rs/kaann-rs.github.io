@@ -6,7 +6,11 @@ lang: tr
 tags: [rust, os, dsa-book]
 translationKey: multi-vs-single-user
 draft: false
-sources: [http://papatyabilim.com.tr/PDF/veri_yapilari_ve_algoritmalar_pdf.pdf]
+sources:
+  - title: "Veri Yapıları ve Algoritmalar"
+    author: "Rıfat Çöleksen"
+    url: "http://papatyabilim.com.tr/PDF/veri_yapilari_ve_algoritmalar_pdf.pdf"
+    detail: "1. Bölüm"
 ---
 
 Merhabalar, bugün sabahleyin erken saatlerde Rıfat Çöleksen hocamızın Veri Yapıları ve Algoritmalar üzerine yazmış olduğu kitabı okumaktaydım. Nitekim 1. Bölüm'de işletim sistemleri hakkında detaylı bir bilgilendirme bulunuyordu. İşte buradan Multi-User ile Single-User OS arasındaki farkları öğrendim. Farklar tam olarak şu şekildeydi:
