@@ -1,23 +1,9 @@
----
-title: "Biçim denemesi: kod, matematik ve görsel"
-description: "Sitenin desteklediği her şeyin tek sayfada nasıl göründüğü — taslak, yayımlanmaz."
-date: 2026-09-03
-lang: tr
-tags: [rust, compilers, mathematics, terminal]
-draft: true
-cover: /assets/ornek-diyagram.svg
-sources:
-  - title: Crafting Interpreters
-    author: Robert Nystrom
-    url: https://craftinginterpreters.com/
-    detail: böl. 17
-  - title: Engineering a Compiler
-    author: Keith Cooper, Linda Torczon
-    detail: 3. baskı, böl. 5
----
+# Biçim
 
-Bu yazı `draft: true` olduğu için yayına çıkmaz — sadece `npm run dev` içinde
-görünür. Amacı, sitede kullanabileceğin her biçimi tek yerde göstermek.
+Sitede kullanabileceğin her biçim, tek sayfada. `_templates/` build tarafından
+yok sayılır, yani bu dosya siteye çıkmaz — Obsidian'da açıp bakman için burada.
+
+Kaynağını görmek için Obsidian'da **Ctrl+E** ile düzenleme moduna geç.
 
 ## Rust kodu
 

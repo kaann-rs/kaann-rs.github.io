@@ -49,7 +49,8 @@ so you can read it in place before publishing.
 
 Markdown, plus the extras the site adds: callout boxes, trees, numbered
 figures, KaTeX maths and annotated code blocks. All of it is in
-`_templates/Ref — *.md`, with live examples you can copy.
+`_templates/Ref — *.md`, with live examples you can copy — `Ref — biçim.md`
+puts every one of them on a single page.
 
 ## Publishing
 
